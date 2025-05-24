@@ -1,0 +1,55 @@
+{
+  "structured_data": {
+    "Name": "Name not found",
+    "Contact": {
+      "Email": "snehakumari64445@gmail.com",
+      "Phone": "+91 9310913758",
+      "LinkedIn": "linkedin.com/in/sneha422",
+      "Websites": [
+        "sneha.everydayseries.io"
+      ],
+      "Location": "Faridabad, India"
+    },
+    "Education": [
+      "SNEHA KUMARI Faridabad, India +91 9310913758 snehakumari64445@gmail.com linkedin.com/in/sneha422 https://sneha.everydayseries.io/ Education Manav Rachna University 2022 – 2026 Bachelor of Technology in Computer Science and Technology (maintain ing SGPA of 8.82 ) Faridabad, India Tagore Academy Public School, Sec 3, FBD 2022 CBSE 12th (85%) 10th (92.6%) Experience Remote Advanced Nonlinear Technologies Limited (London, U K) 13 Jan’25 – Present Software Developer (Gen AI) Intern (10,000/month) - Engaged in a 12 -week career readiness program focused on Generative AI applications in professional and technical domains.",
+      "Achievements - Holding reputation among Top 10% in Quine and won $1 92 dollars - Participated in Amity University's hackathon, achieving a top 10 rank out of 97 participating teams."
+    ],
+    "Projects": [
+      "- Currently working on a capstone project to design, develop, and present a comprehensive Generative AI solution .",
+      "INeuron AI 16 June ’24 – 22 july’24 Project Intern (Unpaid) - Developed an AI system that provides fashion advice and generates custom outfit images based on user prompts.",
+      "Projects YouTube Comment Analyzer | React , Python | Try out | Blog - Developed a Flask -based API using Google Cloud Console and YouTube Data API v3 to extract all YouTube comments beyond the 100 -limit using regex -based ID extraction and pagination handling.",
+      "Once installed, the extension analyzes the project's package, identifies the main file, and reviews the entire source code.",
+      "- To use it enter either the Gemini API or MindsDB API, it will then generates a structured and informative README based on the project's setup and dependencies ."
+    ],
+    "Skills & Tools": [
+      "Profile Links • GitHub • Leet Code (Contest Rating: 1,573 | Top: 26.83% ) • Code 360 • Portfolio Technical Skills Languages : C, C++, Python , HTML/CSS, JavaScript , Java Technologies/Frameworks/Libraries : React JS, React Native, Git , GitHu b, MindsDB"
+    ],
+    "Achievements": [
+      "- 1st Prize Winner in the Health Tech Innovation Fest at MRIIRS."
+    ]
+  },
+  "categorized_data": {
+    "Name": [],
+    "Contact Information": [],
+    "Work Experience": [],
+    "Education": [
+      "SNEHA KUMARI Faridabad, India +91 9310913758 snehakumari64445@gmail.com linkedin.com/in/sneha422 https://sneha.everydayseries.io/ Education Manav Rachna University 2022 – 2026 Bachelor of Technology in Computer Science and Technology (maintain ing SGPA of 8.82 ) Faridabad, India Tagore Academy Public School, Sec 3, FBD 2022 CBSE 12th (85%) 10th (92.6%) Experience Remote Advanced Nonlinear Technologies Limited (London, U K) 13 Jan’25 – Present Software Developer (Gen AI) Intern (10,000/month) - Engaged in a 12 -week career readiness program focused on Generative AI applications in professional and technical domains.",
+      "Achievements - Holding reputation among Top 10% in Quine and won $1 92 dollars - Participated in Amity University's hackathon, achieving a top 10 rank out of 97 participating teams."
+    ],
+    "Projects": [
+      "- Currently working on a capstone project to design, develop, and present a comprehensive Generative AI solution .",
+      "INeuron AI 16 June ’24 – 22 july’24 Project Intern (Unpaid) - Developed an AI system that provides fashion advice and generates custom outfit images based on user prompts.",
+      "Projects YouTube Comment Analyzer | React , Python | Try out | Blog - Developed a Flask -based API using Google Cloud Console and YouTube Data API v3 to extract all YouTube comments beyond the 100 -limit using regex -based ID extraction and pagination handling.",
+      "Once installed, the extension analyzes the project's package, identifies the main file, and reviews the entire source code.",
+      "- To use it enter either the Gemini API or MindsDB API, it will then generates a structured and informative README based on the project's setup and dependencies ."
+    ],
+    "Skills & Tools": [
+      "Profile Links • GitHub • Leet Code (Contest Rating: 1,573 | Top: 26.83% ) • Code 360 • Portfolio Technical Skills Languages : C, C++, Python , HTML/CSS, JavaScript , Java Technologies/Frameworks/Libraries : React JS, React Native, Git , GitHu b, MindsDB"
+    ],
+    "Achievements": [
+      "- 1st Prize Winner in the Health Tech Innovation Fest at MRIIRS."
+    ],
+    "Certifications": [],
+    "Interests": []
+  }
+}
