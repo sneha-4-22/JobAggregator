@@ -17,17 +17,17 @@ export function UserProvider({ children }) {
   async function registerWithEmail(email, name = "Resume User") {
     try {
       // Generate a random password - in production you might want to improve this
-      const randomPassword = Math.random().toString(36).slice(-10) + 
-                            Math.random().toString(36).toUpperCase().slice(-2) + 
-                            Math.floor(Math.random() * 10) + 
-                            "!";
-      
+      const randomPassword = Math.random().toString(36).slice(-10) +
+        Math.random().toString(36).toUpperCase().slice(-2) +
+        Math.floor(Math.random() * 10) +
+        "!";
+
       // Create the user account
       const newUser = await account.create(ID.unique(), email, randomPassword, name);
       console.log("User created successfully:", newUser);
       
-      // Login the user
-      await account.createEmailPasswordSession(email, randomPassword);
+      // Login the user - FIXED: Use createEmailSession instead of createEmailPasswordSession
+      await account.createEmailSession(email, randomPassword);
       const loggedInUser = await account.get();
       setUser(loggedInUser);
       
@@ -90,7 +90,7 @@ export function UserProvider({ children }) {
       setLoading(true);
       const loggedInUser = await account.get();
       setUser(loggedInUser);
-      
+
       // Check verification status
       const verified = await isEmailVerified();
       setIsVerified(verified);

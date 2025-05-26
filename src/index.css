@@ -1,49 +1,61 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-/* Original animations */
-@keyframes float {
-  0%, 100% {
-    transform: translateY(0);
-  }
-  50% {
-    transform: translateY(-20px);
-  }
+:root {
+  font-family: 'Inter', system-ui, sans-serif;
+  line-height: 1.5;
+  font-weight: 400;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
-@keyframes bounce-slow {
-  0%, 100% {
-    transform: translateY(0);
+body {
+  margin: 0;
+  min-width: 320px;
+  min-height: 100vh;
+}
+
+@layer components {
+  .btn-primary {
+    @apply px-6 py-2.5 bg-primary-600 text-white font-medium text-sm rounded-lg shadow-md 
+      hover:bg-primary-700 hover:shadow-lg focus:bg-primary-700 focus:shadow-lg 
+      active:bg-primary-800 transition duration-150 ease-in-out;
   }
-  50% {
-    transform: translateY(-10px);
+  
+  .btn-secondary {
+    @apply px-6 py-2.5 bg-secondary-600 text-white font-medium text-sm rounded-lg shadow-md 
+      hover:bg-secondary-700 hover:shadow-lg focus:bg-secondary-700 focus:shadow-lg 
+      active:bg-secondary-800 transition duration-150 ease-in-out;
   }
-}
-
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-    transform: translateY(20px);
+  
+  .btn-outline {
+    @apply px-6 py-2.5 bg-transparent text-primary-600 font-medium text-sm border border-primary-600 rounded-lg
+      hover:bg-primary-50 focus:bg-primary-50 active:bg-primary-100 transition duration-150 ease-in-out;
   }
-  to {
-    opacity: 1;
-    transform: translateY(0);
+
+  .card {
+    @apply bg-white rounded-xl shadow-card p-6 transition-all duration-300 hover:shadow-card-hover;
   }
-}
 
-.animate-float-slow {
-  animation: float 6s ease-in-out infinite;
-}
+  .form-input {
+    @apply block w-full px-4 py-2 text-gray-700 bg-white border border-gray-300 rounded-md
+      focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-200;
+  }
 
-.animate-float-delayed {
-  animation: float 8s ease-in-out infinite;
-}
+  .form-label {
+    @apply block mb-2 text-sm font-medium text-gray-700;
+  }
 
-.animate-bounce-slow {
-  animation: bounce-slow 3s ease-in-out infinite;
-}
+  .section {
+    @apply py-12 md:py-16 lg:py-20;
+  }
 
-.animate-fadeIn {
-  animation: fadeIn 0.5s ease-out forwards;
+  .container-custom {
+    @apply px-4 mx-auto max-w-7xl sm:px-6 lg:px-8;
+  }
 }

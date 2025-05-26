@@ -1,36 +1,52 @@
-import React from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import { UserProvider } from './contexts/UserContext';
-import ResumeUpload from './components/ResumeUpload';
-import Dashboard from './components/Dashboard';
-import EmailVerification from './components/EmailVerification';
-import { Toaster } from 'react-hot-toast';
+import { Routes, Route, Navigate } from 'react-router-dom'
+import { useUser } from './context/UserContext'
+import Layout from './components/Layout'
+import LandingPage from './pages/LandingPage'
+import UploadResume from './pages/UploadResume'
+import VerifyEmail from './pages/VerifyEmail'
+import Dashboard from './pages/Dashboard'
+import NotFound from './pages/NotFound'
+import ProtectedRoute from './components/ProtectedRoute'
 
 function App() {
-  return (
-    <UserProvider>
-      <Router>
-        <div className="min-h-screen bg-gray-900 text-white">
-          <Toaster
-            position="top-center"
-            toastOptions={{
-              duration: 5000,
-              style: {
-                background: '#333',
-                color: '#fff',
-              },
-            }}
-          />
-          <Routes>
-            <Route path="/" element={<ResumeUpload />} />
-            <Route path="/dashboard" element={<Dashboard />} />
-            <Route path="/verify-email" element={<EmailVerification />} />
-            <Route path="*" element={<Navigate to="/" replace />} />
-          </Routes>
+  const { current, loading, isVerified } = useUser()
+  
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-gray-50">
+        <div className="text-center">
+          <div className="w-16 h-16 border-4 border-primary-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <div className="text-primary-600 text-xl animate-pulse">Loading amazing opportunities...</div>
         </div>
-      </Router>
-    </UserProvider>
-  );
+      </div>
+    )
+  }
+
+  return (
+    <Routes>
+      <Route path="/" element={<Layout />}>
+        {/* Public routes */}
+        <Route index element={<LandingPage />} />
+        <Route path="upload-resume" element={<UploadResume />} />
+        <Route path="verify-email" element={<VerifyEmail />} />
+
+        {/* Protected routes */}
+        <Route element={<ProtectedRoute isAllowed={!!current} redirectPath="/" />}>
+          <Route 
+            path="dashboard" 
+            element={
+              isVerified 
+                ? <Dashboard /> 
+                : <Navigate to="/verify-email\" replace />
+            } 
+          />
+        </Route>
+
+        {/* 404 route */}
+        <Route path="*" element={<NotFound />} />
+      </Route>
+    </Routes>
+  )
 }
 
-export default App;
+export default App
