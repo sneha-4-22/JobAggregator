@@ -64,7 +64,7 @@ function Login() {
             <div className="text-center mb-8">
               <h1 className="text-3xl font-bold mb-2 text-white">Welcome Back</h1>
               <p className="text-gray-300">
-                Sign in to your CareerConnect account
+                Sign in to your Gigrithm account
               </p>
             </div>
 

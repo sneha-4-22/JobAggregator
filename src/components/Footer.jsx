@@ -10,7 +10,7 @@ function Footer() {
         <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-8">
           {/* Brand and tagline */}
           <div className="col-span-1 md:col-span-1 lg:col-span-1">
-            <Link to="/" className="text-2xl font-bold text-white">CareerConnect</Link>
+            <Link to="/" className="text-2xl font-bold text-white">Gigrithm</Link>
             <p className="mt-2 text-gray-400">
               Connecting talent with opportunity. Your next career move starts here.
             </p>
@@ -106,7 +106,7 @@ function Footer() {
         </div>
 
         <div className="mt-12 pt-8 border-t border-gray-800 text-center text-gray-400">
-          <p>© {currentYear} CareerConnect. All rights reserved.</p>
+          <p>© {currentYear} Gigrithm. All rights reserved.</p>
         </div>
       </div>
     </footer>
