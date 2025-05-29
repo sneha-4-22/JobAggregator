@@ -12,7 +12,7 @@ function VerifyEmail() {
   const [confirmPassword, setConfirmPassword] = useState('')
   const [passwordError, setPasswordError] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
-  const { current, isVerified, checkVerificationStatus } = useUser()
+  const { isVerified, checkVerificationStatus } = useUser()
   const navigate = useNavigate()
   const location = useLocation()
 
@@ -99,7 +99,7 @@ function VerifyEmail() {
           </div>
           <h2 className="text-2xl font-bold text-gray-800 mb-2">Email Verified!</h2>
           <p className="text-gray-600 mb-6">
-            Your email has been successfully verified. Now, let's set up a password for your account.
+            Your email has been successfully verified. Now, let&#39;s set up a password for your account.
           </p>
           
           <form onSubmit={handlePasswordUpdate} className="max-w-md mx-auto">
@@ -185,11 +185,11 @@ function VerifyEmail() {
         </div>
         <h2 className="text-2xl font-bold text-gray-800 mb-2">Check Your Email</h2>
         <p className="text-gray-600 mb-6">
-          We've sent a verification link to your email address.
+          We&#39;ve sent a verification link to your email address.
           Please check your inbox and click the link to verify your account.
         </p>
         <p className="text-sm text-gray-500">
-          If you don't see the email, check your spam folder or{' '}
+          If you don&#39;t see the email, check your spam folder or{' '}
           <button className="text-primary-600 hover:underline">
             click here to resend
           </button>

@@ -1,7 +1,6 @@
-import { Link } from 'react-router-dom'
-import { motion } from 'framer-motion'
-import { FiArrowRight, FiSearch, FiUsers, FiCheckCircle, FiBriefcase } from 'react-icons/fi'
-
+import { motion } from 'framer-motion';
+import { FiArrowRight, FiSearch, FiUsers, FiCheckCircle, FiBriefcase } from 'react-icons/fi';
+import { Link } from 'react-router-dom';
 function LandingPage() {
   const containerVariants = {
     hidden: { opacity: 0 },
@@ -44,45 +43,57 @@ function LandingPage() {
   return (
     <div className="pt-16">
       {/* Hero Section */}
-      <section className="relative bg-gradient-to-r from-primary-900 to-secondary-900 text-white">
-        <div className="absolute inset-0 bg-black opacity-30"></div>
-        <div className="relative container-custom py-20 md:py-28 lg:py-36">
+      <section className="relative bg-gradient-to-br from-blue-900 via-purple-900 to-indigo-900 text-white min-h-screen flex items-center">
+        <div className="absolute inset-0 bg-black opacity-40"></div>
+        <div className="absolute inset-0 bg-gradient-to-r from-blue-600/20 to-purple-600/20"></div>
+        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 md:py-28 lg:py-36">
           <motion.div
-            className="max-w-3xl mx-auto text-center"
+            className="max-w-4xl mx-auto text-center"
             variants={containerVariants}
             initial="hidden"
             animate="visible"
           >
             <motion.h1 
-              className="text-4xl md:text-5xl lg:text-6xl font-bold mb-6"
+              className="text-5xl md:text-6xl lg:text-7xl font-bold mb-8 leading-tight"
               variants={itemVariants}
             >
-              Find Your Dream Job or Internship
+              Find Your Dream Job or{' '}
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-400">
+                Internship
+              </span>
             </motion.h1>
             <motion.p 
-              className="text-lg md:text-xl mb-8 text-gray-100"
+              className="text-xl md:text-2xl mb-12 text-gray-200 max-w-3xl mx-auto leading-relaxed"
               variants={itemVariants}
             >
-              Upload your resume once, and we'll connect you with the best opportunities from across the web.
+              Upload your resume once, and we&#39;ll connect you with the best opportunities from across the web.
             </motion.p>
             <motion.div variants={itemVariants}>
-              <Link 
-                to="/upload-resume" 
-                className="btn-primary text-base md:text-lg px-8 py-3 inline-flex items-center"
-              >
-                Get Started <FiArrowRight className="ml-2" />
-              </Link>
+             <Link 
+  to="/upload-resume"
+  className="bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white font-semibold text-lg px-10 py-4 rounded-full inline-flex items-center transition-all duration-300 hover:scale-105 hover:shadow-2xl hover:shadow-blue-500/25"
+>
+  Get Started <FiArrowRight className="ml-3" size={20} />
+</Link>
             </motion.div>
           </motion.div>
+        </div>
+        
+        {/* Animated background elements */}
+        <div className="absolute inset-0 overflow-hidden pointer-events-none">
+          <div className="absolute -top-40 -right-40 w-80 h-80 bg-blue-500 rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-pulse"></div>
+          <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-purple-500 rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-pulse"></div>
         </div>
       </section>
 
       {/* Features Section */}
-      <section className="section bg-white">
-        <div className="container-custom">
-          <div className="text-center mb-16">
-            <h2 className="text-3xl md:text-4xl font-bold mb-4 text-gray-800">How It Works</h2>
-            <p className="text-lg text-gray-600 max-w-3xl mx-auto">
+      <section className="py-24 bg-gray-900">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-20">
+            <h2 className="text-4xl md:text-5xl font-bold mb-6 text-white">
+              How It Works
+            </h2>
+            <p className="text-xl text-gray-300 max-w-3xl mx-auto leading-relaxed">
               Our platform simplifies your job search with a few easy steps
             </p>
           </div>
@@ -90,72 +101,72 @@ function LandingPage() {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
             {/* Feature 1 */}
             <motion.div 
-              className="card text-center"
-              whileHover={{ y: -5 }}
-              initial={{ opacity: 0, y: 20 }}
+              className="bg-gray-800 rounded-2xl p-8 text-center border border-gray-700 hover:border-blue-500 transition-all duration-300 hover:shadow-2xl hover:shadow-blue-500/20 group"
+              whileHover={{ y: -10, scale: 1.02 }}
+              initial={{ opacity: 0, y: 30 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
-              transition={{ duration: 0.5 }}
+              transition={{ duration: 0.6 }}
             >
-              <div className="inline-flex items-center justify-center w-16 h-16 mb-6 rounded-full bg-primary-100 text-primary-600">
-                <FiUsers size={28} />
+              <div className="inline-flex items-center justify-center w-20 h-20 mb-6 rounded-full bg-gradient-to-r from-blue-500 to-blue-600 text-white shadow-lg group-hover:scale-110 transition-transform duration-300">
+                <FiUsers size={32} />
               </div>
-              <h3 className="text-xl font-semibold mb-3 text-gray-800">Upload Your Resume</h3>
-              <p className="text-gray-600">
-                Just upload your resume once, and we'll automatically extract your information.
+              <h3 className="text-2xl font-bold mb-4 text-white">Upload Your Resume</h3>
+              <p className="text-gray-300 text-lg leading-relaxed">
+                Just upload your resume once, and we&#39;ll automatically extract your information.
               </p>
             </motion.div>
 
             {/* Feature 2 */}
             <motion.div 
-              className="card text-center"
-              whileHover={{ y: -5 }}
-              initial={{ opacity: 0, y: 20 }}
+              className="bg-gray-800 rounded-2xl p-8 text-center border border-gray-700 hover:border-green-500 transition-all duration-300 hover:shadow-2xl hover:shadow-green-500/20 group"
+              whileHover={{ y: -10, scale: 1.02 }}
+              initial={{ opacity: 0, y: 30 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
-              transition={{ duration: 0.5, delay: 0.1 }}
+              transition={{ duration: 0.6, delay: 0.1 }}
             >
-              <div className="inline-flex items-center justify-center w-16 h-16 mb-6 rounded-full bg-secondary-100 text-secondary-600">
-                <FiCheckCircle size={28} />
+              <div className="inline-flex items-center justify-center w-20 h-20 mb-6 rounded-full bg-gradient-to-r from-green-500 to-green-600 text-white shadow-lg group-hover:scale-110 transition-transform duration-300">
+                <FiCheckCircle size={32} />
               </div>
-              <h3 className="text-xl font-semibold mb-3 text-gray-800">Verify Your Email</h3>
-              <p className="text-gray-600">
+              <h3 className="text-2xl font-bold mb-4 text-white">Verify Your Email</h3>
+              <p className="text-gray-300 text-lg leading-relaxed">
                 Confirm your email address and create your secure account.
               </p>
             </motion.div>
 
             {/* Feature 3 */}
             <motion.div 
-              className="card text-center"
-              whileHover={{ y: -5 }}
-              initial={{ opacity: 0, y: 20 }}
+              className="bg-gray-800 rounded-2xl p-8 text-center border border-gray-700 hover:border-purple-500 transition-all duration-300 hover:shadow-2xl hover:shadow-purple-500/20 group"
+              whileHover={{ y: -10, scale: 1.02 }}
+              initial={{ opacity: 0, y: 30 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
-              transition={{ duration: 0.5, delay: 0.2 }}
+              transition={{ duration: 0.6, delay: 0.2 }}
             >
-              <div className="inline-flex items-center justify-center w-16 h-16 mb-6 rounded-full bg-accent-100 text-accent-600">
-                <FiSearch size={28} />
+              <div className="inline-flex items-center justify-center w-20 h-20 mb-6 rounded-full bg-gradient-to-r from-purple-500 to-purple-600 text-white shadow-lg group-hover:scale-110 transition-transform duration-300">
+                <FiSearch size={32} />
               </div>
-              <h3 className="text-xl font-semibold mb-3 text-gray-800">Get Matched</h3>
-              <p className="text-gray-600">
+              <h3 className="text-2xl font-bold mb-4 text-white">Get Matched</h3>
+              <p className="text-gray-300 text-lg leading-relaxed">
                 Our AI matching system finds relevant jobs and internships just for you.
               </p>
             </motion.div>
 
             {/* Feature 4 */}
             <motion.div 
-              className="card text-center"
-              whileHover={{ y: -5 }}
-              initial={{ opacity: 0, y: 20 }}
+              className="bg-gray-800 rounded-2xl p-8 text-center border border-gray-700 hover:border-teal-500 transition-all duration-300 hover:shadow-2xl hover:shadow-teal-500/20 group"
+              whileHover={{ y: -10, scale: 1.02 }}
+              initial={{ opacity: 0, y: 30 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
-              transition={{ duration: 0.5, delay: 0.3 }}
+              transition={{ duration: 0.6, delay: 0.3 }}
             >
-              <div className="inline-flex items-center justify-center w-16 h-16 mb-6 rounded-full bg-success-100 text-success-600">
-                <FiBriefcase size={28} />
+              <div className="inline-flex items-center justify-center w-20 h-20 mb-6 rounded-full bg-gradient-to-r from-teal-500 to-teal-600 text-white shadow-lg group-hover:scale-110 transition-transform duration-300">
+                <FiBriefcase size={32} />
               </div>
-              <h3 className="text-xl font-semibold mb-3 text-gray-800">Apply With Ease</h3>
-              <p className="text-gray-600">
+              <h3 className="text-2xl font-bold mb-4 text-white">Apply With Ease</h3>
+              <p className="text-gray-300 text-lg leading-relaxed">
                 Apply to multiple positions with a single click and track your applications.
               </p>
             </motion.div>
@@ -164,74 +175,86 @@ function LandingPage() {
       </section>
 
       {/* Stats Section */}
-      <section className="section bg-gray-50">
-        <div className="container-custom">
+      <section className="py-24 bg-gray-800">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             <motion.div 
-              className="card text-center"
-              initial={{ opacity: 0 }}
-              whileInView={{ opacity: 1 }}
+              className="bg-gray-900 rounded-2xl p-8 text-center border border-gray-700 hover:border-blue-400 transition-all duration-300 hover:shadow-xl group"
+              initial={{ opacity: 0, scale: 0.9 }}
+              whileInView={{ opacity: 1, scale: 1 }}
               viewport={{ once: true }}
               transition={{ duration: 0.5 }}
+              whileHover={{ scale: 1.05 }}
             >
-              <h3 className="text-4xl font-bold text-primary-600 mb-2">10,000+</h3>
-              <p className="text-lg text-gray-600">Jobs & Internships</p>
+              <h3 className="text-5xl md:text-6xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-blue-600 mb-4 group-hover:scale-110 transition-transform duration-300">
+                10,000+
+              </h3>
+              <p className="text-xl text-gray-300 font-semibold">Jobs & Internships</p>
             </motion.div>
             
             <motion.div 
-              className="card text-center"
-              initial={{ opacity: 0 }}
-              whileInView={{ opacity: 1 }}
+              className="bg-gray-900 rounded-2xl p-8 text-center border border-gray-700 hover:border-green-400 transition-all duration-300 hover:shadow-xl group"
+              initial={{ opacity: 0, scale: 0.9 }}
+              whileInView={{ opacity: 1, scale: 1 }}
               viewport={{ once: true }}
               transition={{ duration: 0.5, delay: 0.1 }}
+              whileHover={{ scale: 1.05 }}
             >
-              <h3 className="text-4xl font-bold text-secondary-600 mb-2">5,000+</h3>
-              <p className="text-lg text-gray-600">Happy Users</p>
+              <h3 className="text-5xl md:text-6xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-green-400 to-green-600 mb-4 group-hover:scale-110 transition-transform duration-300">
+                5,000+
+              </h3>
+              <p className="text-xl text-gray-300 font-semibold">Happy Users</p>
             </motion.div>
             
             <motion.div 
-              className="card text-center"
-              initial={{ opacity: 0 }}
-              whileInView={{ opacity: 1 }}
+              className="bg-gray-900 rounded-2xl p-8 text-center border border-gray-700 hover:border-purple-400 transition-all duration-300 hover:shadow-xl group"
+              initial={{ opacity: 0, scale: 0.9 }}
+              whileInView={{ opacity: 1, scale: 1 }}
               viewport={{ once: true }}
               transition={{ duration: 0.5, delay: 0.2 }}
+              whileHover={{ scale: 1.05 }}
             >
-              <h3 className="text-4xl font-bold text-accent-600 mb-2">500+</h3>
-              <p className="text-lg text-gray-600">Partner Companies</p>
+              <h3 className="text-5xl md:text-6xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-purple-600 mb-4 group-hover:scale-110 transition-transform duration-300">
+                500+
+              </h3>
+              <p className="text-xl text-gray-300 font-semibold">Partner Companies</p>
             </motion.div>
           </div>
         </div>
       </section>
 
       {/* Team Section */}
-      <section className="section bg-white">
-        <div className="container-custom">
-          <div className="text-center mb-16">
-            <h2 className="text-3xl md:text-4xl font-bold mb-4 text-gray-800">Meet Our Team</h2>
-            <p className="text-lg text-gray-600 max-w-3xl mx-auto">
+      <section className="py-24 bg-gray-900">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-20">
+            <h2 className="text-4xl md:text-5xl font-bold mb-6 text-white">Meet Our Team</h2>
+            <p className="text-xl text-gray-300 max-w-3xl mx-auto leading-relaxed">
               3rd Year Students at Manav Rachna University
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-5xl mx-auto">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-12 max-w-5xl mx-auto">
             {teamMembers.map((member, index) => (
               <motion.div
                 key={member.name}
-                className="text-center"
-                initial={{ opacity: 0, y: 20 }}
+                className="text-center group"
+                initial={{ opacity: 0, y: 30 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
-                transition={{ duration: 0.5, delay: index * 0.1 }}
+                transition={{ duration: 0.6, delay: index * 0.1 }}
               >
-                <div className="mb-6 mx-auto">
+                <div className="mb-8 mx-auto relative">
+                  <div className="absolute inset-0 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full blur-lg opacity-30 group-hover:opacity-50 transition-opacity duration-300"></div>
                   <img
                     src={member.image}
                     alt={member.name}
-                    className="w-48 h-48 rounded-full object-cover mx-auto shadow-lg transform transition-transform duration-300 hover:scale-105"
+                    className="relative w-48 h-48 rounded-full object-cover mx-auto shadow-2xl transform transition-all duration-300 group-hover:scale-105 border-4 border-gray-700 group-hover:border-blue-400"
                   />
                 </div>
-                <h3 className="text-xl font-semibold text-gray-800 mb-2">{member.name}</h3>
-                <p className="text-gray-600">{member.role}</p>
+                <h3 className="text-2xl font-bold text-white mb-3 group-hover:text-blue-400 transition-colors duration-300">
+                  {member.name}
+                </h3>
+                <p className="text-lg text-gray-300 font-medium">{member.role}</p>
               </motion.div>
             ))}
           </div>
@@ -239,29 +262,41 @@ function LandingPage() {
       </section>
 
       {/* CTA Section */}
-      <section className="section bg-primary-900 text-white">
-        <div className="container-custom text-center">
+      <section className="py-24 bg-gradient-to-br from-blue-900 via-purple-900 to-indigo-900 text-white relative overflow-hidden">
+        <div className="absolute inset-0 bg-black opacity-20"></div>
+        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <motion.div
-            initial={{ opacity: 0, y: 20 }}
+            initial={{ opacity: 0, y: 30 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
-            transition={{ duration: 0.5 }}
+            transition={{ duration: 0.6 }}
           >
-            <h2 className="text-3xl md:text-4xl font-bold mb-6">Ready to Start Your Job Search?</h2>
-            <p className="text-xl mb-8 max-w-3xl mx-auto">
+            <h2 className="text-4xl md:text-5xl font-bold mb-8">
+              Ready to Start Your{' '}
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-400">
+                Job Search?
+              </span>
+            </h2>
+            <p className="text-xl md:text-2xl mb-12 max-w-4xl mx-auto text-gray-200 leading-relaxed">
               Upload your resume now and let us help you find your next opportunity.
             </p>
-            <Link 
-              to="/upload-resume" 
-              className="btn-primary text-lg px-8 py-3 inline-flex items-center"
-            >
-              Get Started <FiArrowRight className="ml-2" />
-            </Link>
+           <Link 
+  to="/upload-resume"
+  className="bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white font-semibold text-lg px-10 py-4 rounded-full inline-flex items-center transition-all duration-300 hover:scale-105 hover:shadow-2xl hover:shadow-blue-500/25"
+>
+  Get Started <FiArrowRight className="ml-3" size={20} />
+</Link>
           </motion.div>
+        </div>
+        
+        {/* Background decoration */}
+        <div className="absolute inset-0 overflow-hidden pointer-events-none">
+          <div className="absolute top-20 right-20 w-64 h-64 bg-blue-500 rounded-full mix-blend-multiply filter blur-xl opacity-10 animate-pulse"></div>
+          <div className="absolute bottom-20 left-20 w-64 h-64 bg-purple-500 rounded-full mix-blend-multiply filter blur-xl opacity-10 animate-pulse"></div>
         </div>
       </section>
     </div>
   )
 }
 
-export default LandingPage
+export default LandingPage;

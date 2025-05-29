@@ -5,7 +5,7 @@ import { motion } from 'framer-motion'
 
 function Layout() {
   return (
-    <div className="flex flex-col min-h-screen bg-gray-50">
+    <div className="flex flex-col min-h-screen bg-gray-900">
       <Navbar />
       <motion.main 
         className="flex-grow" 

@@ -40,15 +40,15 @@ function Navbar() {
     <nav 
       className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
         scrolled || isMenuOpen || location.pathname !== '/' 
-          ? 'bg-white shadow-md py-2' 
-          : 'bg-transparent py-4'
-      }`}
+          ? 'bg-gray-900/95 backdrop-blur-md shadow-xl border-b border-gray-800' 
+          : 'bg-transparent'
+      } py-4`}
     >
-      <div className="container-custom flex justify-between items-center">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex justify-between items-center">
         {/* Logo */}
         <Link to="/" className="flex items-center">
           <motion.div 
-            className="text-2xl font-bold text-primary-600"
+            className="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-400"
             initial={{ opacity: 0, x: -20 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.5 }}
@@ -63,8 +63,8 @@ function Navbar() {
             to="/" 
             className={`font-medium transition-colors ${
               location.pathname === '/' 
-                ? 'text-primary-600' 
-                : 'text-gray-700 hover:text-primary-600'
+                ? 'text-blue-400' 
+                : 'text-gray-300 hover:text-blue-400'
             }`}
           >
             Home
@@ -76,21 +76,24 @@ function Navbar() {
                 to="/dashboard" 
                 className={`font-medium transition-colors ${
                   location.pathname === '/dashboard' 
-                    ? 'text-primary-600' 
-                    : 'text-gray-700 hover:text-primary-600'
+                    ? 'text-blue-400' 
+                    : 'text-gray-300 hover:text-blue-400'
                 }`}
               >
                 Dashboard
               </Link>
               <button 
                 onClick={handleLogout}
-                className="btn-outline"
+                className="border border-gray-600 text-gray-300 hover:border-blue-400 hover:text-blue-400 font-semibold px-6 py-2 rounded-full transition-all duration-300"
               >
                 Logout
               </button>
             </>
           ) : (
-            <Link to="/upload-resume" className="btn-primary">
+            <Link 
+              to="/upload-resume" 
+              className="bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white font-semibold px-6 py-2 rounded-full transition-all duration-300 hover:scale-105"
+            >
               Get Started
             </Link>
           )}
@@ -98,7 +101,7 @@ function Navbar() {
 
         {/* Mobile menu button */}
         <button 
-          className="md:hidden text-gray-700"
+          className="md:hidden text-gray-300 hover:text-white transition-colors"
           onClick={() => setIsMenuOpen(!isMenuOpen)}
         >
           {isMenuOpen ? <FiX size={24} /> : <FiMenu size={24} />}
@@ -108,18 +111,18 @@ function Navbar() {
       {/* Mobile Navigation */}
       {isMenuOpen && (
         <motion.div 
-          className="md:hidden bg-white"
+          className="md:hidden bg-gray-900/95 backdrop-blur-md border-t border-gray-800"
           initial={{ opacity: 0, height: 0 }}
           animate={{ opacity: 1, height: 'auto' }}
           transition={{ duration: 0.3 }}
         >
-          <div className="container-custom py-4 flex flex-col space-y-4">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex flex-col space-y-4">
             <Link 
               to="/" 
               className={`font-medium py-2 transition-colors ${
                 location.pathname === '/' 
-                  ? 'text-primary-600' 
-                  : 'text-gray-700'
+                  ? 'text-blue-400' 
+                  : 'text-gray-300 hover:text-blue-400'
               }`}
             >
               Home
@@ -131,21 +134,24 @@ function Navbar() {
                   to="/dashboard" 
                   className={`font-medium py-2 transition-colors ${
                     location.pathname === '/dashboard' 
-                      ? 'text-primary-600' 
-                      : 'text-gray-700'
+                      ? 'text-blue-400' 
+                      : 'text-gray-300 hover:text-blue-400'
                   }`}
                 >
                   Dashboard
                 </Link>
                 <button 
                   onClick={handleLogout}
-                  className="btn-outline w-full py-2"
+                  className="border border-gray-600 text-gray-300 hover:border-blue-400 hover:text-blue-400 font-semibold px-6 py-2 rounded-full transition-all duration-300 w-full"
                 >
                   Logout
                 </button>
               </>
             ) : (
-              <Link to="/upload-resume" className="btn-primary w-full text-center">
+              <Link 
+                to="/upload-resume" 
+                className="bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white font-semibold px-6 py-2 rounded-full transition-all duration-300 text-center"
+              >
                 Get Started
               </Link>
             )}
