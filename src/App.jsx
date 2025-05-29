@@ -7,7 +7,7 @@ import VerifyEmail from './pages/VerifyEmail'
 import Dashboard from './pages/Dashboard'
 import NotFound from './pages/NotFound'
 import ProtectedRoute from './components/ProtectedRoute'
-
+import Login from './pages/Login'
 function App() {
   const { current, loading, isVerified } = useUser()
   
@@ -27,6 +27,7 @@ function App() {
       <Route path="/" element={<Layout />}>
         {/* Public routes */}
         <Route index element={<LandingPage />} />
+        <Route path="login" element={<Login />} />
         <Route path="upload-resume" element={<UploadResume />} />
         <Route path="verify-email" element={<VerifyEmail />} />
 

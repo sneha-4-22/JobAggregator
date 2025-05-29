@@ -90,12 +90,20 @@ function Navbar() {
               </button>
             </>
           ) : (
-            <Link 
-              to="/upload-resume" 
-              className="bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white font-semibold px-6 py-2 rounded-full transition-all duration-300 hover:scale-105"
-            >
-              Get Started
-            </Link>
+            <div className="flex items-center space-x-4">
+              <Link 
+                to="/login" 
+                className="border border-gray-600 text-gray-300 hover:border-blue-400 hover:text-blue-400 font-semibold px-6 py-2 rounded-full transition-all duration-300"
+              >
+                Sign In
+              </Link>
+              <Link 
+                to="/upload-resume" 
+                className="bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white font-semibold px-6 py-2 rounded-full transition-all duration-300 hover:scale-105"
+              >
+                Get Started
+              </Link>
+            </div>
           )}
         </div>
 
@@ -148,12 +156,20 @@ function Navbar() {
                 </button>
               </>
             ) : (
-              <Link 
-                to="/upload-resume" 
-                className="bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white font-semibold px-6 py-2 rounded-full transition-all duration-300 text-center"
-              >
-                Get Started
-              </Link>
+              <>
+                <Link 
+                  to="/login" 
+                  className="border border-gray-600 text-gray-300 hover:border-blue-400 hover:text-blue-400 font-semibold px-6 py-2 rounded-full transition-all duration-300 text-center"
+                >
+                  Sign In
+                </Link>
+                <Link 
+                  to="/upload-resume" 
+                  className="bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white font-semibold px-6 py-2 rounded-full transition-all duration-300 text-center"
+                >
+                  Get Started
+                </Link>
+              </>
             )}
           </div>
         </motion.div>

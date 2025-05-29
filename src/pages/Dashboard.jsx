@@ -226,36 +226,38 @@ function Dashboard() {
   }, [])
 
   return (
-    <div className="pt-20 pb-16 min-h-screen bg-gray-50">
+    <div className="pt-20 pb-16 min-h-screen bg-gray-900">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header Section */}
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-800 mb-2">
+          <h1 className="text-3xl font-bold text-white mb-2">
             {userProfile ? `Welcome, ${userProfile.name || 'User'}!` : 'Job & Internship Dashboard'}
           </h1>
-          <p className="text-gray-600">
+          <p className="text-gray-300">
             {userProfile 
               ? 'Here are personalized job and internship recommendations based on your resume.'
               : 'Upload your resume to get personalized job recommendations, or browse available opportunities.'
             }
           </p>
-          <div className="mt-2 text-sm text-gray-500">
-            API Status: <span className="font-medium">Connected to {API_BASE_URL}</span>
+          <div className="mt-2 text-sm text-gray-400">
+            API Status: <span className="font-medium text-blue-400">Connected to {API_BASE_URL}</span>
           </div>
         </div>
 
         {/* Resume Upload Section */}
         {!userProfile && (
-          <div className="mb-8 bg-white rounded-xl shadow-sm p-6 border-2 border-dashed border-blue-300">
+          <div className="mb-8 bg-gray-800 rounded-xl shadow-lg p-6 border-2 border-dashed border-blue-500/50 hover:border-blue-400 transition-colors">
             <div className="text-center">
-              <FiUpload className="mx-auto h-12 w-12 text-blue-400 mb-4" />
-              <h3 className="text-lg font-medium text-gray-900 mb-2">
+              <div className="inline-flex items-center justify-center w-16 h-16 mb-4 rounded-full bg-gradient-to-r from-blue-500 to-purple-600 text-white shadow-lg">
+                <FiUpload size={24} />
+              </div>
+              <h3 className="text-lg font-medium text-white mb-2">
                 Upload Your Resume for Personalized Recommendations
               </h3>
-              <p className="text-gray-600 mb-4">
+              <p className="text-gray-300 mb-4">
                 Get job recommendations tailored to your skills and experience
               </p>
-              <label className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors cursor-pointer">
+              <label className="inline-flex items-center px-6 py-3 bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white rounded-lg transition-all duration-300 hover:scale-105 cursor-pointer">
                 <FiUpload className="mr-2" />
                 {resumeAnalyzing ? 'Analyzing Resume...' : 'Upload Resume (PDF)'}
                 <input
@@ -272,41 +274,41 @@ function Dashboard() {
 
         {/* User Profile Section */}
         {userProfile && (
-          <div className="mb-8 bg-white rounded-xl shadow-sm p-6">
+          <div className="mb-8 bg-gray-800 rounded-xl shadow-lg p-6 border border-gray-700">
             <div className="flex items-center mb-4">
-              <FiUser className="mr-2 text-blue-600" />
-              <h3 className="text-lg font-semibold text-gray-800">Your Profile</h3>
+              <FiUser className="mr-2 text-blue-400" />
+              <h3 className="text-lg font-semibold text-white">Your Profile</h3>
               <button 
                 onClick={() => setUserProfile(null)}
-                className="ml-auto text-sm text-gray-500 hover:text-red-600 transition-colors"
+                className="ml-auto text-sm text-gray-400 hover:text-red-400 transition-colors"
               >
                 Clear Profile
               </button>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
               <div>
-                <p className="text-sm text-gray-600">Name</p>
-                <p className="font-medium">{userProfile.name || 'Not specified'}</p>
+                <p className="text-sm text-gray-400">Name</p>
+                <p className="font-medium text-white">{userProfile.name || 'Not specified'}</p>
               </div>
               <div>
-                <p className="text-sm text-gray-600">Experience Level</p>
-                <p className="font-medium capitalize">{userProfile.experience_level || 'Entry'}</p>
+                <p className="text-sm text-gray-400">Experience Level</p>
+                <p className="font-medium capitalize text-white">{userProfile.experience_level || 'Entry'}</p>
               </div>
               <div>
-                <p className="text-sm text-gray-600">Education</p>
-                <p className="font-medium">{userProfile.education || 'Not specified'}</p>
+                <p className="text-sm text-gray-400">Education</p>
+                <p className="font-medium text-white">{userProfile.education || 'Not specified'}</p>
               </div>
               <div>
-                <p className="text-sm text-gray-600">Location Preference</p>
-                <p className="font-medium">{userProfile.location_preference || 'Flexible'}</p>
+                <p className="text-sm text-gray-400">Location Preference</p>
+                <p className="font-medium text-white">{userProfile.location_preference || 'Flexible'}</p>
               </div>
             </div>
             {userProfile.skills && userProfile.skills.length > 0 && (
               <div className="mt-4">
-                <p className="text-sm text-gray-600 mb-2">Skills</p>
+                <p className="text-sm text-gray-400 mb-2">Skills</p>
                 <div className="flex flex-wrap gap-2">
                   {userProfile.skills.map((skill, index) => (
-                    <span key={index} className="bg-blue-100 text-blue-800 px-2 py-1 rounded-md text-xs">
+                    <span key={index} className="bg-blue-900/50 text-blue-200 px-3 py-1 rounded-md text-sm border border-blue-500/30">
                       {skill}
                     </span>
                   ))}
@@ -317,14 +319,14 @@ function Dashboard() {
         )}
 
         {/* Search and Filters */}
-        <div className="mb-8 bg-white rounded-xl shadow-sm p-4">
+        <div className="mb-8 bg-gray-800 rounded-xl shadow-lg p-4 border border-gray-700">
           <div className="flex flex-col md:flex-row md:items-center gap-4">
             <div className="relative flex-grow">
               <FiSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
               <input
                 type="text"
                 placeholder="Search jobs, companies, or skills"
-                className="pl-10 w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="pl-10 w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-white placeholder-gray-400"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
@@ -333,9 +335,9 @@ function Dashboard() {
             
             <div className="flex flex-col sm:flex-row gap-4">
               <div className="relative">
-                <label className="block text-sm font-medium text-gray-700 mb-1">Job Type</label>
+                <label className="block text-sm font-medium text-gray-300 mb-1">Job Type</label>
                 <select 
-                  className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-white"
                   value={filters.jobType}
                   onChange={(e) => handleFilterChange('jobType', e.target.value)}
                 >
@@ -346,9 +348,9 @@ function Dashboard() {
               </div>
               
               <div className="relative">
-                <label className="block text-sm font-medium text-gray-700 mb-1">Location</label>
+                <label className="block text-sm font-medium text-gray-300 mb-1">Location</label>
                 <select 
-                  className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-white"
                   value={filters.location}
                   onChange={(e) => handleFilterChange('location', e.target.value)}
                 >
@@ -364,7 +366,7 @@ function Dashboard() {
               
               <button 
                 onClick={handleSearch}
-                className="h-10 self-end flex items-center justify-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                className="h-10 self-end flex items-center justify-center px-4 py-2 bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white rounded-lg transition-all duration-300"
                 disabled={loading}
               >
                 <FiFilter className="mr-2" />
@@ -377,17 +379,17 @@ function Dashboard() {
         {/* Job Listings */}
         <div className="mb-8">
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-2xl font-semibold text-gray-800">
+            <h2 className="text-2xl font-semibold text-white">
               {userProfile ? 'Recommended for You' : 'Available Opportunities'}
             </h2>
             {jobs.length > 0 && (
-              <p className="text-gray-600">{filterJobs().length} jobs found</p>
+              <p className="text-gray-300">{filterJobs().length} jobs found</p>
             )}
           </div>
           
           {loading ? (
             <div className="flex justify-center py-12">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
             </div>
           ) : (
             <div className="grid grid-cols-1 gap-6">
@@ -395,12 +397,12 @@ function Dashboard() {
                 filterJobs().map(job => (
                   <div 
                     key={job.id}
-                    className="bg-white rounded-xl shadow-sm p-6 hover:shadow-md transition-shadow border border-gray-200 hover:border-blue-300"
+                    className="bg-gray-800 rounded-xl shadow-lg p-6 hover:shadow-2xl transition-all duration-300 border border-gray-700 hover:border-blue-500/50 group"
                   >
                     <div className="flex flex-col md:flex-row md:items-center">
                       {/* Company Logo */}
                       <div className="mb-4 md:mb-0 md:mr-6">
-                        <div className="w-16 h-16 rounded-lg overflow-hidden bg-gray-100 flex-shrink-0">
+                        <div className="w-16 h-16 rounded-lg overflow-hidden bg-gray-700 flex-shrink-0 border border-gray-600">
                           <img 
                             src={job.logo} 
                             alt={`${job.company} logo`} 
@@ -410,7 +412,7 @@ function Dashboard() {
                               e.target.nextSibling.style.display = 'flex'
                             }}
                           />
-                          <div className="w-full h-full bg-gray-200 flex items-center justify-center text-gray-500 text-xs" style={{display: 'none'}}>
+                          <div className="w-full h-full bg-gray-600 flex items-center justify-center text-gray-400 text-xs" style={{display: 'none'}}>
                             No Logo
                           </div>
                         </div>
@@ -420,8 +422,8 @@ function Dashboard() {
                       <div className="flex-grow">
                         <div className="flex flex-col md:flex-row md:items-start md:justify-between mb-2">
                           <div>
-                            <h3 className="text-xl font-semibold text-gray-800 mb-1">{job.title}</h3>
-                            <div className="flex items-center gap-4 text-gray-600 mb-2">
+                            <h3 className="text-xl font-semibold text-white mb-1 group-hover:text-blue-400 transition-colors">{job.title}</h3>
+                            <div className="flex items-center gap-4 text-gray-300 mb-2">
                               <div className="flex items-center">
                                 <FiBriefcase className="mr-1" size={14} />
                                 <span>{job.company}</span>
@@ -439,21 +441,21 @@ function Dashboard() {
                           <div className="flex items-center gap-2">
                             <span className={`inline-block px-3 py-1 rounded-full text-xs font-medium 
                               ${job.type === 'Internship' 
-                                ? 'bg-green-100 text-green-800' 
-                                : 'bg-blue-100 text-blue-800'
+                                ? 'bg-green-900/50 text-green-300 border border-green-500/30' 
+                                : 'bg-blue-900/50 text-blue-300 border border-blue-500/30'
                               }`}
                             >
                               {job.type}
                             </span>
                             {job.source && (
-                              <span className="inline-block px-2 py-1 rounded-md text-xs bg-gray-100 text-gray-600">
+                              <span className="inline-block px-2 py-1 rounded-md text-xs bg-gray-700 text-gray-300 border border-gray-600">
                                 {job.source}
                               </span>
                             )}
                           </div>
                         </div>
                         
-                        <p className="text-gray-600 mb-4 line-clamp-2">
+                        <p className="text-gray-300 mb-4 line-clamp-2">
                           {job.description}
                         </p>
                         
@@ -462,13 +464,13 @@ function Dashboard() {
                             {job.skills.slice(0, 6).map((skill, index) => (
                               <span 
                                 key={index} 
-                                className="bg-gray-100 text-gray-800 px-2 py-1 rounded-md text-xs"
+                                className="bg-gray-700 text-gray-200 px-2 py-1 rounded-md text-xs border border-gray-600"
                               >
                                 {skill}
                               </span>
                             ))}
                             {job.skills.length > 6 && (
-                              <span className="text-gray-500 text-xs">
+                              <span className="text-gray-400 text-xs">
                                 +{job.skills.length - 6} more
                               </span>
                             )}
@@ -476,7 +478,7 @@ function Dashboard() {
                         )}
                         
                         <div className="flex flex-col sm:flex-row sm:items-center justify-between">
-                          <div className="text-blue-600 font-semibold mb-2 sm:mb-0">
+                          <div className="text-blue-400 font-semibold mb-2 sm:mb-0">
                             {job.salary}
                           </div>
                           
@@ -484,8 +486,8 @@ function Dashboard() {
                             <button 
                               className={`p-2 rounded-full transition-colors ${
                                 savedJobs.includes(job.id) 
-                                  ? 'bg-blue-100 text-blue-600'
-                                  : 'bg-gray-100 text-gray-600 hover:bg-blue-50 hover:text-blue-600'
+                                  ? 'bg-blue-900/50 text-blue-400 border border-blue-500/30'
+                                  : 'bg-gray-700 text-gray-400 hover:bg-blue-900/30 hover:text-blue-400 border border-gray-600'
                               }`}
                               onClick={() => toggleSaveJob(job.id)}
                               aria-label={savedJobs.includes(job.id) ? "Unsave job" : "Save job"}
@@ -498,13 +500,13 @@ function Dashboard() {
                                 href={job.apply_link}
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                                className="inline-flex items-center px-4 py-2 bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white rounded-lg transition-all duration-300 hover:scale-105"
                               >
                                 Apply Now
                                 <FiExternalLink className="ml-2" size={16} />
                               </a>
                             ) : (
-                              <button className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
+                              <button className="px-4 py-2 bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white rounded-lg transition-all duration-300 hover:scale-105">
                                 Apply Now
                               </button>
                             )}
@@ -515,16 +517,16 @@ function Dashboard() {
                   </div>
                 ))
               ) : (
-                <div className="text-center py-12 bg-white rounded-xl shadow-sm">
+                <div className="text-center py-12 bg-gray-800 rounded-xl shadow-lg border border-gray-700">
                   <div className="text-gray-400 mb-4">
                     <FiSearch size={48} className="mx-auto" />
                   </div>
-                  <p className="text-gray-600 mb-4">
+                  <p className="text-gray-300 mb-4">
                     {loading ? 'Loading jobs...' : 'No job listings match your search criteria.'}
                   </p>
                   {!loading && (
                     <button 
-                      className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors"
+                      className="px-4 py-2 bg-gray-700 text-gray-200 rounded-lg hover:bg-gray-600 transition-colors border border-gray-600"
                       onClick={() => {
                         setSearchTerm('')
                         setFilters({ jobType: 'internship', location: 'all' })
@@ -548,20 +550,20 @@ function Dashboard() {
 
         {/* Tips Section */}
         {userProfile && (
-          <div className="bg-white rounded-xl shadow-sm p-6">
-            <h3 className="text-lg font-semibold text-gray-800 mb-4">
+          <div className="bg-gray-800 rounded-xl shadow-lg p-6 border border-gray-700">
+            <h3 className="text-lg font-semibold text-white mb-4">
               💡 Job Search Tips Based on Your Profile
             </h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="p-4 bg-blue-50 rounded-lg">
-                <h4 className="font-medium text-blue-800 mb-2">Skill Recommendations</h4>
-                <p className="text-blue-700 text-sm">
+              <div className="p-4 bg-blue-900/30 rounded-lg border border-blue-500/30">
+                <h4 className="font-medium text-blue-300 mb-2">Skill Recommendations</h4>
+                <p className="text-blue-200 text-sm">
                   Based on current job trends, consider learning React, Node.js, or Python to increase your opportunities.
                 </p>
               </div>
-              <div className="p-4 bg-green-50 rounded-lg">
-                <h4 className="font-medium text-green-800 mb-2">Application Tips</h4>
-                <p className="text-green-700 text-sm">
+              <div className="p-4 bg-green-900/30 rounded-lg border border-green-500/30">
+                <h4 className="font-medium text-green-300 mb-2">Application Tips</h4>
+                <p className="text-green-200 text-sm">
                   Tailor your resume for each application and highlight projects that match the job requirements.
                 </p>
               </div>

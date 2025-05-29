@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useDropzone } from 'react-dropzone'
 import { motion } from 'framer-motion'
-import { FiUpload, FiFile, FiCheck, FiLoader, FiXCircle } from 'react-icons/fi'
+import { FiUpload, FiFile, FiLoader, FiEdit3, FiEye, FiEyeOff } from 'react-icons/fi'
 import { useUser } from '../context/UserContext'
 import axios from 'axios'
 
@@ -11,8 +11,14 @@ function UploadResume() {
   const [error, setError] = useState('')
   const [uploading, setUploading] = useState(false)
   const [extractedEmail, setExtractedEmail] = useState('')
+  const [editableEmail, setEditableEmail] = useState('')
+  const [password, setPassword] = useState('')
+  const [confirmPassword, setConfirmPassword] = useState('')
+  const [showPassword, setShowPassword] = useState(false)
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false)
+  const [step, setStep] = useState('upload') // 'upload', 'confirm', 'registering'
   const [registrationStatus, setRegistrationStatus] = useState('')
-  const { registerWithEmail } = useUser()
+  const { registerWithEmailAndPassword } = useUser()
   const navigate = useNavigate()
 
   const onDrop = acceptedFiles => {
@@ -36,7 +42,7 @@ function UploadResume() {
     maxSize: 5 * 1024 * 1024, // 5MB
   })
 
-  const handleUpload = async () => {
+  const handleExtractEmail = async () => {
     if (!file) {
       setError('Please select a resume to upload')
       return
@@ -57,80 +63,259 @@ function UploadResume() {
         }
       })
       
-      // If successful, show the extracted email
+      // If successful, show the extracted email for confirmation
       if (response.data.email) {
         setExtractedEmail(response.data.email)
-        setRegistrationStatus('extracting')
-        
-        // Register user with the extracted email
-        try {
-          const result = await registerWithEmail(response.data.email)
-          
-          if (result.userId) {
-            setRegistrationStatus('success')
-            // Wait a moment then redirect to verify email page
-            setTimeout(() => navigate('/verify-email'), 2000)
-          } else {
-            setRegistrationStatus('existing')
-            // Wait a moment then redirect to verify email page
-            setTimeout(() => navigate('/verify-email'), 2000)
-          }
-        } catch (regError) {
-          console.error('Registration error:', regError)
-          setError(regError.message || 'Registration failed')
-          setRegistrationStatus('failed')
-        }
+        setEditableEmail(response.data.email)
+        setStep('confirm')
+      } else {
+        setError('Could not extract email from resume. Please try again.')
       }
     } catch (err) {
       console.error('Upload error:', err)
-      setError(err.response?.data?.error || 'Failed to upload resume')
+      setError(err.response?.data?.error || 'Failed to process resume')
     } finally {
       setUploading(false)
     }
   }
 
-  const renderStatus = () => {
-    if (uploading) {
-      return (
-        <div className="flex items-center justify-center space-x-2 text-blue-400">
-          <FiLoader className="animate-spin" />
-          <span>Processing your resume...</span>
-        </div>
-      )
+  const validateForm = () => {
+    if (!editableEmail || !editableEmail.includes('@')) {
+      setError('Please enter a valid email address')
+      return false
     }
     
-    if (registrationStatus === 'extracting') {
+    if (password.length < 8) {
+      setError('Password must be at least 8 characters long')
+      return false
+    }
+    
+    if (password !== confirmPassword) {
+      setError('Passwords do not match')
+      return false
+    }
+    
+    return true
+  }
+
+  const handleRegister = async () => {
+    if (!validateForm()) return
+
+    setRegistrationStatus('registering')
+    setError('')
+    
+    try {
+      const result = await registerWithEmailAndPassword(editableEmail, password)
+      
+      if (result.userId) {
+        setRegistrationStatus('success')
+        // Wait a moment then redirect to verify email page
+        setTimeout(() => navigate('/verify-email'), 2000)
+      } else {
+        setRegistrationStatus('existing')
+        // Wait a moment then redirect to verify email page
+        setTimeout(() => navigate('/verify-email'), 2000)
+      }
+    } catch (regError) {
+      console.error('Registration error:', regError)
+      setError(regError.message || 'Registration failed')
+      setRegistrationStatus('failed')
+    }
+  }
+
+  const renderUploadStep = () => (
+    <>
+      <div className="text-center mb-8">
+        <h1 className="text-3xl font-bold mb-2 text-white">Upload Your Resume</h1>
+        <p className="text-gray-300">
+          We&#39;ll extract your email from your resume to get you started.
+        </p>
+      </div>
+      
+      <div 
+        {...getRootProps()} 
+        className={`border-2 border-dashed rounded-lg p-8 mb-6 transition-all duration-300 text-center cursor-pointer
+          ${isDragActive 
+            ? 'border-blue-500 bg-blue-500/10' 
+            : 'border-gray-600 hover:border-blue-500 hover:bg-blue-500/5'
+          }`}
+      >
+        <input {...getInputProps()} />
+        <div className="flex flex-col items-center justify-center">
+          {file ? (
+            <>
+              <FiFile className="text-blue-400 mb-4" size={40} />
+              <p className="text-blue-400 font-medium text-lg">{file.name}</p>
+              <p className="text-gray-400 text-sm mt-2">
+                {(file.size / 1024 / 1024).toFixed(2)} MB
+              </p>
+            </>
+          ) : (
+            <>
+              <FiUpload className="text-gray-400 mb-4" size={40} />
+              <p className="text-white font-medium text-lg mb-2">
+                Drag & drop your resume here
+              </p>
+              <p className="text-gray-400 text-sm">
+                (PDF file only, max 5MB)
+              </p>
+            </>
+          )}
+        </div>
+      </div>
+      
+      <div className="text-center">
+        <button 
+          onClick={handleExtractEmail}
+          disabled={!file || uploading}
+          className={`bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white font-semibold px-8 py-3 rounded-full transition-all duration-300 hover:scale-105 w-full ${
+            (!file || uploading) 
+              ? 'opacity-50 cursor-not-allowed hover:scale-100' 
+              : 'hover:shadow-xl hover:shadow-blue-500/25'
+          }`}
+        >
+          {uploading ? (
+            <span className="flex items-center justify-center">
+              <FiLoader className="animate-spin mr-2" />
+              Processing...
+            </span>
+          ) : (
+            'Extract Email & Continue'
+          )}
+        </button>
+      </div>
+    </>
+  )
+
+  const renderConfirmStep = () => (
+    <>
+      <div className="text-center mb-8">
+        <h1 className="text-3xl font-bold mb-2 text-white">Confirm Your Details</h1>
+        <p className="text-gray-300">
+          Please confirm your email and set a password for your account.
+        </p>
+      </div>
+      
+      <div className="space-y-6">
+        <div>
+          <label className="block text-sm font-medium text-gray-300 mb-2">
+            Email Address
+          </label>
+          <div className="relative">
+            <input
+              type="email"
+              value={editableEmail}
+              onChange={(e) => setEditableEmail(e.target.value)}
+              className="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              placeholder="Enter your email"
+            />
+            <FiEdit3 className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+          </div>
+          {extractedEmail !== editableEmail && (
+            <p className="text-yellow-400 text-sm mt-1">
+              Original: {extractedEmail}
+            </p>
+          )}
+        </div>
+        
+        <div>
+          <label className="block text-sm font-medium text-gray-300 mb-2">
+            Password
+          </label>
+          <div className="relative">
+            <input
+              type={showPassword ? 'text' : 'password'}
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              className="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent pr-12"
+              placeholder="Enter your password"
+            />
+            <button
+              type="button"
+              onClick={() => setShowPassword(!showPassword)}
+              className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-white"
+            >
+              {showPassword ? <FiEyeOff /> : <FiEye />}
+            </button>
+          </div>
+          <p className="text-gray-400 text-sm mt-1">
+            Must be at least 8 characters long
+          </p>
+        </div>
+        
+        <div>
+          <label className="block text-sm font-medium text-gray-300 mb-2">
+            Confirm Password
+          </label>
+          <div className="relative">
+            <input
+              type={showConfirmPassword ? 'text' : 'password'}
+              value={confirmPassword}
+              onChange={(e) => setConfirmPassword(e.target.value)}
+              className="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent pr-12"
+              placeholder="Confirm your password"
+            />
+            <button
+              type="button"
+              onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+              className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-white"
+            >
+              {showConfirmPassword ? <FiEyeOff /> : <FiEye />}
+            </button>
+          </div>
+        </div>
+      </div>
+      
+      <div className="flex space-x-4 mt-8">
+        <button 
+          onClick={() => setStep('upload')}
+          className="flex-1 border border-gray-600 text-gray-300 hover:border-blue-400 hover:text-blue-400 font-semibold px-6 py-3 rounded-full transition-all duration-300"
+        >
+          Back
+        </button>
+        <button 
+          onClick={handleRegister}
+          disabled={registrationStatus === 'registering'}
+          className="flex-1 bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white font-semibold px-6 py-3 rounded-full transition-all duration-300 hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
+        >
+          Create Account
+        </button>
+      </div>
+    </>
+  )
+
+  const renderStatus = () => {
+    if (registrationStatus === 'registering') {
       return (
-        <div className="flex items-center justify-center space-x-2 text-blue-400">
+        <div className="flex items-center justify-center space-x-2 text-blue-400 mb-6">
           <FiLoader className="animate-spin" />
-          <span>Creating your account with email: {extractedEmail}</span>
+          <span>Creating your account...</span>
         </div>
       )
     }
     
     if (registrationStatus === 'success') {
       return (
-        <div className="flex items-center justify-center space-x-2 text-green-400">
-          <FiCheck />
-          <span>Success! Account created. Redirecting to verification page...</span>
+        <div className="text-center mb-6">
+          <div className="text-green-400 mb-4">
+            <span>✓ Account created successfully!</span>
+          </div>
+          <p className="text-gray-300">
+            Verification email sent. Redirecting...
+          </p>
         </div>
       )
     }
     
     if (registrationStatus === 'existing') {
       return (
-        <div className="flex items-center justify-center space-x-2 text-yellow-400">
-          <FiCheck />
-          <span>Account already exists. Verification email sent. Redirecting...</span>
-        </div>
-      )
-    }
-    
-    if (registrationStatus === 'failed') {
-      return (
-        <div className="flex items-center justify-center space-x-2 text-red-400">
-          <FiXCircle />
-          <span>Registration failed. Please try again.</span>
+        <div className="text-center mb-6">
+          <div className="text-yellow-400 mb-4">
+            <span>Account already exists</span>
+          </div>
+          <p className="text-gray-300">
+            Verification email sent. Redirecting...
+          </p>
         </div>
       )
     }
@@ -148,44 +333,7 @@ function UploadResume() {
           transition={{ duration: 0.5 }}
         >
           <div className="bg-gray-800 rounded-2xl p-8 border border-gray-700 shadow-xl">
-            <div className="text-center mb-8">
-              <h1 className="text-3xl font-bold mb-2 text-white">Upload Your Resume</h1>
-              <p className="text-gray-300">
-                We&apos;ll extract your email from your resume to get you started.
-              </p>
-            </div>
-            
-            <div 
-              {...getRootProps()} 
-              className={`border-2 border-dashed rounded-lg p-8 mb-6 transition-all duration-300 text-center cursor-pointer
-                ${isDragActive 
-                  ? 'border-blue-500 bg-blue-500/10' 
-                  : 'border-gray-600 hover:border-blue-500 hover:bg-blue-500/5'
-                }`}
-            >
-              <input {...getInputProps()} />
-              <div className="flex flex-col items-center justify-center">
-                {file ? (
-                  <>
-                    <FiFile className="text-blue-400 mb-4" size={40} />
-                    <p className="text-blue-400 font-medium text-lg">{file.name}</p>
-                    <p className="text-gray-400 text-sm mt-2">
-                      {(file.size / 1024 / 1024).toFixed(2)} MB
-                    </p>
-                  </>
-                ) : (
-                  <>
-                    <FiUpload className="text-gray-400 mb-4" size={40} />
-                    <p className="text-white font-medium text-lg mb-2">
-                      Drag & drop your resume here
-                    </p>
-                    <p className="text-gray-400 text-sm">
-                      (PDF file only, max 5MB)
-                    </p>
-                  </>
-                )}
-              </div>
-            </div>
+            {renderStatus()}
             
             {error && (
               <div className="mb-6 text-center">
@@ -195,34 +343,24 @@ function UploadResume() {
               </div>
             )}
             
-            <div className="mb-6 text-center">
-              {renderStatus()}
-            </div>
-            
-            <div className="text-center">
-              <button 
-                onClick={handleUpload}
-                disabled={!file || uploading || registrationStatus !== ''}
-                className={`bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white font-semibold px-8 py-3 rounded-full transition-all duration-300 hover:scale-105 w-full ${
-                  (!file || uploading || registrationStatus !== '') 
-                    ? 'opacity-50 cursor-not-allowed hover:scale-100' 
-                    : 'hover:shadow-xl hover:shadow-blue-500/25'
-                }`}
-              >
-                {uploading ? (
-                  <span className="flex items-center justify-center">
-                    <FiLoader className="animate-spin mr-2" />
-                    Uploading...
-                  </span>
-                ) : (
-                  'Upload Resume'
-                )}
-              </button>
-            </div>
+            {step === 'upload' && renderUploadStep()}
+            {step === 'confirm' && renderConfirmStep()}
             
             <div className="mt-6 text-center text-sm text-gray-400">
               <p>
-                By uploading your resume, you agree to our{' '}
+                Already have an account?{' '}
+                <button 
+                  onClick={() => navigate('/login')}
+                  className="text-blue-400 hover:text-blue-300 hover:underline transition-colors"
+                >
+                  Sign in here
+                </button>
+              </p>
+            </div>
+            
+            <div className="mt-4 text-center text-sm text-gray-400">
+              <p>
+                By creating an account, you agree to our{' '}
                 <a href="#" className="text-blue-400 hover:text-blue-300 hover:underline transition-colors">
                   Terms of Service
                 </a>{' '}
