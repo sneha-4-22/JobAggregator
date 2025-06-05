@@ -4,7 +4,6 @@ import { useDropzone } from 'react-dropzone'
 import { motion } from 'framer-motion'
 import { FiUpload, FiFile, FiLoader, FiEdit3, FiEye, FiEyeOff } from 'react-icons/fi'
 import { useUser } from '../context/UserContext'
-import axios from 'axios'
 
 function UploadResume() {
   const [file, setFile] = useState(null)
@@ -18,7 +17,9 @@ function UploadResume() {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
   const [step, setStep] = useState('upload') // 'upload', 'confirm', 'registering'
   const [registrationStatus, setRegistrationStatus] = useState('')
-  const { registerWithEmailAndPassword } = useUser()
+  
+  // Use the correct function from UserContext
+  const { registerWithResumeAndPassword } = useUser()
   const navigate = useNavigate()
 
   const onDrop = acceptedFiles => {
@@ -57,23 +58,28 @@ function UploadResume() {
       formData.append('resume', file)
       
       // Upload to extract email API
-      const response = await axios.post('http://localhost:5000/api/extract-email', formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data'
-        }
+      const response = await fetch('http://127.0.0.1:5000/api/extract-email', {
+        method: 'POST',
+        body: formData
       })
       
+      if (!response.ok) {
+        throw new Error('Failed to extract email from resume')
+      }
+      
+      const data = await response.json()
+      
       // If successful, show the extracted email for confirmation
-      if (response.data.email) {
-        setExtractedEmail(response.data.email)
-        setEditableEmail(response.data.email)
+      if (data.email) {
+        setExtractedEmail(data.email)
+        setEditableEmail(data.email)
         setStep('confirm')
       } else {
         setError('Could not extract email from resume. Please try again.')
       }
     } catch (err) {
       console.error('Upload error:', err)
-      setError(err.response?.data?.error || 'Failed to process resume')
+      setError(err.message || 'Failed to process resume')
     } finally {
       setUploading(false)
     }
@@ -105,16 +111,18 @@ function UploadResume() {
     setError('')
     
     try {
-      const result = await registerWithEmailAndPassword(editableEmail, password)
+      // Use the correct function that processes resume during registration
+      const result = await registerWithResumeAndPassword(
+        editableEmail, 
+        password, 
+        file, // Pass the actual file object
+        'Resume User' // Default name, will be overridden by resume data
+      )
       
       if (result.userId) {
         setRegistrationStatus('success')
-        // Wait a moment then redirect to verify email page
-        setTimeout(() => navigate('/verify-email'), 2000)
-      } else {
-        setRegistrationStatus('existing')
-        // Wait a moment then redirect to verify email page
-        setTimeout(() => navigate('/verify-email'), 2000)
+        // Redirect to dashboard since profile is already created
+        setTimeout(() => navigate('/dashboard'), 2000)
       }
     } catch (regError) {
       console.error('Registration error:', regError)
@@ -128,7 +136,7 @@ function UploadResume() {
       <div className="text-center mb-8">
         <h1 className="text-3xl font-bold mb-2 text-white">Upload Your Resume</h1>
         <p className="text-gray-300">
-          We&#39;ll extract your email from your resume to get you started.
+          We&#39;ll create your account and extract your profile information from your resume.
         </p>
       </div>
       
@@ -190,9 +198,9 @@ function UploadResume() {
   const renderConfirmStep = () => (
     <>
       <div className="text-center mb-8">
-        <h1 className="text-3xl font-bold mb-2 text-white">Confirm Your Details</h1>
+        <h1 className="text-3xl font-bold mb-2 text-white">Create Your Account</h1>
         <p className="text-gray-300">
-          Please confirm your email and set a password for your account.
+          Confirm your email and set a password. Your profile will be automatically created from your resume.
         </p>
       </div>
       
@@ -278,7 +286,7 @@ function UploadResume() {
           disabled={registrationStatus === 'registering'}
           className="flex-1 bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white font-semibold px-6 py-3 rounded-full transition-all duration-300 hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
         >
-          Create Account
+          Create Account & Process Resume
         </button>
       </div>
     </>
@@ -287,9 +295,12 @@ function UploadResume() {
   const renderStatus = () => {
     if (registrationStatus === 'registering') {
       return (
-        <div className="flex items-center justify-center space-x-2 text-blue-400 mb-6">
-          <FiLoader className="animate-spin" />
-          <span>Creating your account...</span>
+        <div className="flex flex-col items-center justify-center space-y-4 text-blue-400 mb-6">
+          <FiLoader className="animate-spin text-2xl" />
+          <div className="text-center">
+            <p className="font-medium">Creating your account...</p>
+            <p className="text-sm text-gray-400">This may take a few moments as we process your resume</p>
+          </div>
         </div>
       )
     }
@@ -297,24 +308,27 @@ function UploadResume() {
     if (registrationStatus === 'success') {
       return (
         <div className="text-center mb-6">
-          <div className="text-green-400 mb-4">
+          <div className="text-green-400 mb-4 text-2xl">
             <span>✓ Account created successfully!</span>
           </div>
-          <p className="text-gray-300">
-            Verification email sent. Redirecting...
+          <p className="text-gray-300 mb-2">
+            Your profile has been created with your resume data.
+          </p>
+          <p className="text-gray-400 text-sm">
+            Redirecting to dashboard...
           </p>
         </div>
       )
     }
     
-    if (registrationStatus === 'existing') {
+    if (registrationStatus === 'failed') {
       return (
         <div className="text-center mb-6">
-          <div className="text-yellow-400 mb-4">
-            <span>Account already exists</span>
+          <div className="text-red-400 mb-4">
+            <span>✗ Registration failed</span>
           </div>
           <p className="text-gray-300">
-            Verification email sent. Redirecting...
+            Please try again or contact support if the issue persists.
           </p>
         </div>
       )

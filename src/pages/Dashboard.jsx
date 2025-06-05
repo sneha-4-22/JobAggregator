@@ -13,19 +13,29 @@ function Dashboard() {
     location: 'all'
   })
 
-  const { current: user, hasResume, resumeData, updateResumeData } = useUser()
+  // Updated to use the new UserContext structure
+  const { 
+    current: user, 
+    hasResume, 
+    userProfile, 
+    updateResumeData,
+    getUserStats
+  } = useUser()
 
   // Configure API base URL - change this to match your Flask server
   const API_BASE_URL = 'http://127.0.0.1:5000'
 
+  // Get dashboard data from context
+  const userStats = getUserStats()
+
   // Load initial jobs
   useEffect(() => {
-    if (hasResume && resumeData) {
+    if (hasResume && userProfile) {
       fetchPersonalizedJobs()
     } else {
       fetchDefaultJobs()
     }
-  }, [hasResume, resumeData, filters])
+  }, [hasResume, userProfile, filters])
 
   const fetchDefaultJobs = async () => {
     setLoading(true)
@@ -72,10 +82,10 @@ function Dashboard() {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          skills: resumeData?.skills || [],
-          location: filters.location === 'all' ? resumeData?.location_preference || 'flexible' : filters.location,
+          skills: userProfile?.skills || [],
+          location: filters.location === 'all' ? userProfile?.location || 'flexible' : filters.location,
           job_type: filters.jobType,
-          experience_level: resumeData?.experience_level || 'entry'
+          experience_level: userProfile?.experience_level || 'entry'
         })
       })
       
@@ -114,46 +124,11 @@ function Dashboard() {
     }
 
     setResumeAnalyzing(true)
-    const formData = new FormData()
-    formData.append('resume', file)
 
     try {
-      const response = await fetch(`${API_BASE_URL}/api/analyze-resume`, {
-        method: 'POST',
-        body: formData
-      })
-      
-      if (!response.ok) {
-        let errorMessage = `Server error: ${response.status} ${response.statusText}`
-        try {
-          const errorData = await response.text()
-          if (errorData) {
-            try {
-              const parsedError = JSON.parse(errorData)
-              errorMessage = parsedError.error || errorMessage
-            } catch {
-              errorMessage = errorData
-            }
-          }
-        } catch {
-          // Ignore parsing errors, use default message
-        }
-        throw new Error(errorMessage)
-      }
-      
-      const contentType = response.headers.get("content-type")
-      if (!contentType || !contentType.includes("application/json")) {
-        throw new Error("Server did not return JSON response")
-      }
-      
-      const data = await response.json()
-      
-      if (data.success) {
-        await updateResumeData(data.analysis)
-        alert('Resume analyzed successfully! Getting personalized job recommendations...')
-      } else {
-        alert('Error analyzing resume: ' + (data.error || 'Unknown error'))
-      }
+      // Use the updateResumeData function from context
+      await updateResumeData(file)
+      alert('Resume analyzed successfully! Getting personalized job recommendations...')
     } catch (error) {
       console.error('Error uploading resume:', error)
       alert('Error uploading resume: ' + error.message)
@@ -194,7 +169,7 @@ function Dashboard() {
   }
 
   const handleSearch = () => {
-    if (hasResume && resumeData) {
+    if (hasResume && userProfile) {
       fetchPersonalizedJobs()
     } else {
       fetchDefaultJobs()
@@ -226,7 +201,7 @@ function Dashboard() {
           <div className="flex items-center justify-between">
             <div>
               <h1 className="text-3xl font-bold text-white mb-2">
-                {hasResume ? `Welcome back, ${resumeData?.name || user?.name || 'User'}!` : 'Job & Internship Dashboard'}
+                {hasResume ? `Welcome back, ${userProfile?.name || user?.name || 'User'}!` : 'Job & Internship Dashboard'}
               </h1>
               <p className="text-gray-300">
                 {hasResume 
@@ -238,11 +213,11 @@ function Dashboard() {
             <div className="flex items-center space-x-4">
               {hasResume && (
                 <button 
-                  onClick={() => window.location.href = '/settings'}
+                  onClick={() => window.location.href = '/profile'}
                   className="flex items-center px-4 py-2 bg-gray-700 hover:bg-gray-600 text-white rounded-lg transition-colors border border-gray-600"
                 >
                   <FiSettings className="mr-2" />
-                  Settings
+                  Profile
                 </button>
               )}
             </div>
@@ -251,6 +226,40 @@ function Dashboard() {
             API Status: <span className="font-medium text-blue-400">Connected to {API_BASE_URL}</span>
           </div>
         </div>
+
+        {/* Profile Completeness Banner */}
+        {hasResume && userProfile && (
+          <div className="mb-8 bg-gradient-to-r from-blue-900/50 to-purple-900/50 rounded-xl p-6 border border-blue-500/30">
+            <div className="flex items-center justify-between">
+              <div>
+                <h3 className="text-lg font-semibold text-white mb-1">Profile Status</h3>
+                <p className="text-blue-200">
+                  Your profile is {userProfile.completenessScore || 0}% complete
+                </p>
+              </div>
+              <div className="flex items-center space-x-4">
+                <div className="text-right">
+                  <div className="text-2xl font-bold text-white">{userStats?.skillsCount || 0}</div>
+                  <div className="text-sm text-gray-300">Skills</div>
+                </div>
+                <div className="text-right">
+                  <div className="text-2xl font-bold text-white">{userStats?.workExperienceCount || 0}</div>
+                  <div className="text-sm text-gray-300">Experience</div>
+                </div>
+                <div className="text-right">
+                  <div className="text-2xl font-bold text-white">{userStats?.projectsCount || 0}</div>
+                  <div className="text-sm text-gray-300">Projects</div>
+                </div>
+              </div>
+            </div>
+            <div className="mt-4 bg-gray-700 rounded-full h-2">
+              <div 
+                className="bg-gradient-to-r from-blue-500 to-purple-600 h-2 rounded-full transition-all duration-300"
+                style={{ width: `${userProfile.completenessScore || 0}%` }}
+              ></div>
+            </div>
+          </div>
+        )}
 
         {/* Resume Upload Section - Only show if user doesn't have resume */}
         {!hasResume && (
@@ -281,7 +290,7 @@ function Dashboard() {
         )}
 
         {/* User Profile Section - Show if user has resume */}
-        {hasResume && resumeData && (
+        {hasResume && userProfile && (
           <div className="mb-8 bg-gray-800 rounded-xl shadow-lg p-6 border border-gray-700">
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center">
@@ -301,38 +310,52 @@ function Dashboard() {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
               <div>
                 <p className="text-sm text-gray-400">Name</p>
-                <p className="font-medium text-white">{resumeData.name || 'Not specified'}</p>
+                <p className="font-medium text-white">{userProfile.name || 'Not specified'}</p>
               </div>
               <div>
                 <p className="text-sm text-gray-400">Experience Level</p>
-                <p className="font-medium capitalize text-white">{resumeData.experience_level || 'Entry'}</p>
+                <p className="font-medium capitalize text-white">{userProfile.experience_level || 'Entry'}</p>
               </div>
               <div>
                 <p className="text-sm text-gray-400">Education</p>
-                <p className="font-medium text-white">{resumeData.education || 'Not specified'}</p>
+                <p className="font-medium text-white">{userProfile.education || 'Not specified'}</p>
               </div>
               <div>
                 <p className="text-sm text-gray-400">Location Preference</p>
-                <p className="font-medium text-white">{resumeData.location_preference || 'Flexible'}</p>
+                <p className="font-medium text-white">{userProfile.location || 'Flexible'}</p>
               </div>
             </div>
-            {resumeData.skills && resumeData.skills.length > 0 && (
+            {userProfile.skills && userProfile.skills.length > 0 && (
               <div className="mt-4">
-                <p className="text-sm text-gray-400 mb-2">Skills</p>
+                <p className="text-sm text-gray-400 mb-2">Skills ({userProfile.skills.length})</p>
                 <div className="flex flex-wrap gap-2">
-                  {resumeData.skills.map((skill, index) => (
+                  {userProfile.skills.slice(0, 12).map((skill, index) => (
                     <span key={index} className="bg-blue-900/50 text-blue-200 px-3 py-1 rounded-md text-sm border border-blue-500/30">
                       {skill}
                     </span>
                   ))}
+                  {userProfile.skills.length > 12 && (
+                    <span className="text-gray-400 text-sm px-3 py-1">
+                      +{userProfile.skills.length - 12} more
+                    </span>
+                  )}
                 </div>
               </div>
             )}
-            {resumeData.uploadedAt && (
-              <div className="mt-4 text-sm text-gray-400">
-                Resume uploaded: {new Date(resumeData.uploadedAt).toLocaleDateString()}
+            {userProfile.summary && (
+              <div className="mt-4">
+                <p className="text-sm text-gray-400 mb-2">Professional Summary</p>
+                <p className="text-gray-300 text-sm leading-relaxed">{userProfile.summary}</p>
               </div>
             )}
+            <div className="mt-4 flex items-center justify-between text-sm text-gray-400">
+              <div>
+                Resume: {userProfile.originalFileName || 'Uploaded'}
+              </div>
+              <div>
+                Last updated: {userProfile.resumeUploadedAt ? new Date(userProfile.resumeUploadedAt).toLocaleDateString() : 'Unknown'}
+              </div>
+            </div>
           </div>
         )}
 
@@ -549,7 +572,7 @@ function Dashboard() {
                         setSearchTerm('')
                         setFilters({ jobType: 'internship', location: 'all' })
                         setTimeout(() => {
-                          if (hasResume && resumeData) {
+                          if (hasResume && userProfile) {
                             fetchPersonalizedJobs()
                           } else {
                             fetchDefaultJobs()
@@ -567,22 +590,28 @@ function Dashboard() {
         </div>
 
         {/* Tips Section */}
-        {hasResume && resumeData && (
+        {hasResume && userProfile && (
           <div className="bg-gray-800 rounded-xl shadow-lg p-6 border border-gray-700">
             <h3 className="text-lg font-semibold text-white mb-4">
               💡 Job Search Tips Based on Your Profile
             </h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="p-4 bg-blue-900/30 rounded-lg border border-blue-500/30">
-                <h4 className="font-medium text-blue-300 mb-2">Skill Recommendations</h4>
+                <h4 className="font-medium text-blue-300 mb-2">Profile Optimization</h4>
                 <p className="text-blue-200 text-sm">
-                  Based on current job trends, consider learning React, Node.js, or Python to increase your opportunities.
+                  {userProfile.completenessScore < 80 
+                    ? "Complete your profile to increase visibility to recruiters. Add more skills and work experience."
+                    : "Your profile looks great! Keep it updated with your latest achievements and skills."
+                  }
                 </p>
               </div>
               <div className="p-4 bg-green-900/30 rounded-lg border border-green-500/30">
                 <h4 className="font-medium text-green-300 mb-2">Application Tips</h4>
                 <p className="text-green-200 text-sm">
-                  Tailor your resume for each application and highlight projects that match the job requirements.
+                  {userProfile.experience_level === 'entry' 
+                    ? "Focus on internships and entry-level positions. Highlight your projects and academic achievements."
+                    : "Leverage your experience! Apply to positions that match your skill level and career goals."
+                  }
                 </p>
               </div>
             </div>

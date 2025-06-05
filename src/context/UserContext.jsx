@@ -1,6 +1,12 @@
-import { ID } from "appwrite";
+// Updated UserContext.jsx with data truncation and optimization
+
+import { ID, Query } from "appwrite";
 import { createContext, useContext, useEffect, useState } from "react";
-import { account, isEmailVerified } from "../appwrite";
+import { account, databases } from "../appwrite";
+
+// Appwrite configuration
+const DATABASE_ID = "67f6882400389383a21a";
+const USERS_COLLECTION_ID = "users";
 
 const UserContext = createContext();
 
@@ -13,21 +19,220 @@ export function UserProvider({ children }) {
   const [loading, setLoading] = useState(true);
   const [isVerified, setIsVerified] = useState(false);
   const [hasResume, setHasResume] = useState(false);
-  const [resumeData, setResumeData] = useState(null);
+  const [userProfile, setUserProfile] = useState(null);
 
-  // Register user with email and password (for resume upload flow)
-  async function registerWithEmailAndPassword(email, password, name = "Resume User") {
+  // Utility function to truncate and optimize data for Appwrite storage
+  function optimizeDataForStorage(data, maxLength = 8000) {
+    if (typeof data === 'string') {
+      return data.length > maxLength ? data.substring(0, maxLength) + '...' : data;
+    }
+    
+    if (Array.isArray(data)) {
+      // Convert array to condensed string format
+      let result = data.map(item => {
+        if (typeof item === 'object') {
+          // Create a condensed version of work experience
+          if (item.company || item.position || item.title) {
+            return `${item.position || item.title || 'Position'} at ${item.company || 'Company'} (${item.duration || item.start_date || 'Duration'})${item.description ? ': ' + (item.description.substring(0, 200) + (item.description.length > 200 ? '...' : '')) : ''}`;
+          }
+          return JSON.stringify(item);
+        }
+        return String(item);
+      }).join(' | ');
+      
+      return result.length > maxLength ? result.substring(0, maxLength) + '...' : result;
+    }
+    
+    if (typeof data === 'object' && data !== null) {
+      const stringified = JSON.stringify(data);
+      return stringified.length > maxLength ? stringified.substring(0, maxLength) + '...' : stringified;
+    }
+    
+    return String(data || '');
+  }
+
+  // Enhanced function to extract key skills with limits
+  function extractKeySkills(skills, maxSkills = 20) {
+    if (!Array.isArray(skills)) return [];
+    
+    // Prioritize skills and limit to top skills
+    return skills
+      .slice(0, maxSkills)
+      .map(skill => typeof skill === 'string' ? skill : skill.name || String(skill))
+      .filter(skill => skill && skill.length > 0);
+  }
+
+  // Process resume with Flask API
+  async function processResumeWithAPI(resumeFile) {
     try {
-      // Create the user account
-      const newUser = await account.create(ID.unique(), email, password, name);
+      const formData = new FormData();
+      formData.append('resume', resumeFile);
+
+      const response = await fetch('http://127.0.0.1:5000/api/analyze-resume', {
+        method: 'POST',
+        body: formData
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to process resume');
+      }
+
+      const data = await response.json();
+
+      if (data.success) {
+        return data.analysis;
+      } else {
+        throw new Error(data.error || 'Failed to analyze resume');
+      }
+    } catch (error) {
+      console.error("Error processing resume with API:", error);
+      throw error;
+    }
+  }
+
+  // Create comprehensive user profile in Appwrite database
+  async function createUserProfile(user, email, resumeData) {
+    try {
+      // Optimize all data fields for Appwrite string limits
+      const userProfile = {
+        userId: user.$id,
+        email: email,
+        name: resumeData?.name || 'User',
+        createdAt: new Date().toISOString(),
+        isVerified: false,
+        lastLogin: new Date().toISOString(),
+        hasResume: true,
+        profileComplete: true,
+        
+        // Basic resume data fields - optimized for string storage
+        phone: resumeData?.phone || '',
+        location: resumeData?.location_preference || 'flexible',
+        experience_level: resumeData?.experience_level || 'entry',
+        education: optimizeDataForStorage(resumeData?.education, 2000),
+        summary: optimizeDataForStorage(resumeData?.summary, 3000),
+        
+        // Optimized arrays stored as condensed strings
+        skills: extractKeySkills(resumeData?.skills),
+        work_experience: optimizeDataForStorage(resumeData?.work_experience, 7000), // Reduced limit for work experience
+        projects: optimizeDataForStorage(resumeData?.projects, 2000),
+        certifications: resumeData?.certifications || [],
+        languages: (resumeData?.languages || []).slice(0, 10),
+        
+        // Computed fields
+        profileCompleteness: calculateProfileCompleteness(resumeData),
+        totalExperience: calculateTotalExperience(resumeData?.work_experience || []),
+        skillsCount: Math.min((resumeData?.skills || []).length, 20),
+        projectsCount: Math.min((resumeData?.projects || []).length, 10),
+        completenessScore: calculateResumeCompleteness(resumeData),
+        
+        // Resume metadata
+        originalFileName: resumeData?.originalFileName || '',
+        resumeUploadedAt: new Date().toISOString(),
+        resumeVersion: 1,
+        
+        // Account settings
+        accountType: 'jobseeker',
+        isActive: true,
+        preferences: JSON.stringify({
+          jobAlerts: true,
+          emailNotifications: true,
+          profileVisibility: 'public'
+        })
+      };
+
+      console.log("Creating user profile with optimized data...");
+      
+      const userDoc = await databases.createDocument(
+        DATABASE_ID,
+        USERS_COLLECTION_ID,
+        ID.unique(),
+        userProfile
+      );
+
+      setUserProfile(userDoc);
+      setHasResume(true);
+      console.log("Comprehensive user profile created in database");
+      return userDoc;
+    } catch (error) {
+      console.error("Error creating user profile:", error);
+      throw error;
+    }
+  }
+
+  // Alternative: Use Gemini API for resume processing (if your Flask API fails)
+  async function processResumeWithGemini(resumeFile) {
+    try {
+      // Convert PDF to text first (you'd need a PDF parser)
+      const formData = new FormData();
+      formData.append('file', resumeFile);
+      
+      // This would call your backend that uses Gemini API
+      const response = await fetch('http://127.0.0.1:5000/api/gemini-analyze-resume', {
+        method: 'POST',
+        body: formData
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to process resume with Gemini');
+      }
+
+      const data = await response.json();
+      return data.analysis;
+    } catch (error) {
+      console.error("Error processing resume with Gemini:", error);
+      throw error;
+    }
+  }
+
+  // Main registration function with resume processing and fallback
+  async function registerWithResumeAndPassword(email, password, resumeFile, name = "Resume User") {
+    try {
+      setLoading(true);
+      
+      let resumeAnalysis;
+      
+      try {
+        // Step 1: Try processing with your current API
+        console.log("Processing resume with main API...");
+        resumeAnalysis = await processResumeWithAPI(resumeFile);
+      } catch (apiError) {
+        console.log("Main API failed, trying Gemini fallback...");
+        // Fallback to Gemini API if available
+        try {
+          resumeAnalysis = await processResumeWithGemini(resumeFile);
+        } catch (geminiError) {
+          console.log("Gemini API also failed, using basic extraction...");
+          // Final fallback: create basic profile
+          resumeAnalysis = {
+            name: name,
+            email: email,
+            skills: [],
+            work_experience: [],
+            projects: [],
+            education: "Education details will be updated later",
+            summary: "Profile created from resume upload",
+            experience_level: "entry"
+          };
+        }
+      }
+      
+      // Step 2: Create the user account
+      console.log("Creating user account...");
+      const extractedName = resumeAnalysis.name || name;
+      const newUser = await account.create(ID.unique(), email, password, extractedName);
       console.log("User created successfully:", newUser);
 
-      // Login the user
+      // Step 3: Login the user immediately
       await account.createEmailSession(email, password);
       const loggedInUser = await account.get();
       setUser(loggedInUser);
 
-      // Send verification email
+      // Step 4: Create user profile with optimized resume data
+      console.log("Creating user profile with optimized resume data...");
+      resumeAnalysis.originalFileName = resumeFile.name;
+      await createUserProfile(loggedInUser, email, resumeAnalysis);
+
+      // Step 5: Send verification email
       try {
         const url = window.location.origin + '/verify-email';
         await account.createVerification(url);
@@ -36,127 +241,302 @@ export function UserProvider({ children }) {
         console.error("Failed to send verification email:", verifyError);
       }
 
-      return { userId: newUser.$id, email };
+      return { 
+        userId: newUser.$id, 
+        email, 
+        resumeProcessed: true,
+        message: "Account created successfully with resume data"
+      };
     } catch (error) {
-      console.error("Registration error:", error);
+      console.error("Registration with resume error:", error);
 
-      // If user already exists, try to handle that case
+      // Handle existing user case
       if (error.code === 409) {
-        try {
-          // Send new verification email for existing user
-          await account.createMagicURLSession(ID.unique(), email, window.location.origin + '/verify-email');
-          console.log("Magic URL session created for existing user");
-          return { message: "User already exists. Verification email sent." };
-        } catch (magicLinkError) {
-          console.error("Magic link error:", magicLinkError);
-          throw new Error("User already exists but couldn't send verification. Please contact support.");
-        }
+        throw new Error("User already exists with this email. Please try logging in instead.");
       }
 
       throw error;
+    } finally {
+      setLoading(false);
     }
   }
 
-  // Login with email and password (for returning users)
+  // Login with email and password
   async function loginWithEmailAndPassword(email, password) {
     try {
+      setLoading(true);
+      
       await account.createEmailSession(email, password);
       const loggedInUser = await account.get();
       setUser(loggedInUser);
 
       // Check verification status
-      const verified = await isEmailVerified();
+      const verified = await checkEmailVerification();
       setIsVerified(verified);
 
-      // Check if user has resume data
-      await checkResumeStatus();
+      // Load user's complete profile
+      await loadUserCompleteProfile(loggedInUser.$id);
+
+      // Update last login
+      await updateLastLogin(loggedInUser.$id);
 
       return { success: true, user: loggedInUser };
     } catch (error) {
       console.error("Login error:", error);
       throw error;
+    } finally {
+      setLoading(false);
     }
   }
 
-  // Register user with email extracted from resume (legacy function for backward compatibility)
-  async function registerWithEmail(email, name = "Resume User") {
-    // Generate a random password - in production you might want to improve this
-    const randomPassword = Math.random().toString(36).slice(-10) +
-      Math.random().toString(36).toUpperCase().slice(-2) +
-      Math.floor(Math.random() * 10) +
-      "!";
-
-    return await registerWithEmailAndPassword(email, randomPassword, name);
-  }
-
-  // Store resume data after successful analysis
-  async function updateResumeData(data) {
+  // Load user's complete profile from Appwrite
+  async function loadUserCompleteProfile(userId) {
     try {
-      setResumeData(data);
-      setHasResume(true);
-      
-      // Store in localStorage as backup
-      localStorage.setItem(`resumeData_${user?.$id}`, JSON.stringify({
-        ...data,
-        uploadedAt: new Date().toISOString()
-      }));
-      
-      console.log("Resume data updated successfully");
-    } catch (error) {
-      console.error("Error updating resume data:", error);
-    }
-  }
+      const userResponse = await databases.listDocuments(
+        DATABASE_ID,
+        USERS_COLLECTION_ID,
+        [Query.equal('userId', userId)]
+      );
 
-  // Clear resume data
-  async function clearResumeData() {
-    try {
-      setResumeData(null);
-      setHasResume(false);
-      
-      // Remove from localStorage
-      if (user?.$id) {
-        localStorage.removeItem(`resumeData_${user.$id}`);
+      if (userResponse.documents.length > 0) {
+        const userDoc = userResponse.documents[0];
+        
+        // Parse JSON strings back to arrays/objects for frontend use
+        if (userDoc.skills && typeof userDoc.skills === 'string') {
+          try {
+            userDoc.skills = JSON.parse(userDoc.skills);
+          } catch (e) {
+            userDoc.skills = [];
+          }
+        }
+        
+        if (userDoc.languages && typeof userDoc.languages === 'string') {
+          try {
+            userDoc.languages = JSON.parse(userDoc.languages);
+          } catch (e) {
+            userDoc.languages = [];
+          }
+        }
+        
+        if (userDoc.preferences && typeof userDoc.preferences === 'string') {
+          try {
+            userDoc.preferences = JSON.parse(userDoc.preferences);
+          } catch (e) {
+            userDoc.preferences = {};
+          }
+        }
+        
+        setUserProfile(userDoc);
+        setHasResume(userDoc.hasResume || false);
+        console.log("User profile loaded from database");
+        return true;
+      } else {
+        setHasResume(false);
+        setUserProfile(null);
+        console.log("No user profile found");
+        return false;
       }
-      
-      console.log("Resume data cleared successfully");
     } catch (error) {
-      console.error("Error clearing resume data:", error);
+      console.error("Error loading user profile:", error);
+      setHasResume(false);
+      setUserProfile(null);
+      return false;
     }
   }
 
-  // Check if user has resume data
-  async function checkResumeStatus() {
+  // Update last login timestamp
+  async function updateLastLogin(userId) {
     try {
-      if (user?.$id) {
-        const storedData = localStorage.getItem(`resumeData_${user.$id}`);
-        if (storedData) {
-          const parsedData = JSON.parse(storedData);
-          setResumeData(parsedData);
-          setHasResume(true);
-          return true;
+      const userResponse = await databases.listDocuments(
+        DATABASE_ID,
+        USERS_COLLECTION_ID,
+        [Query.equal('userId', userId)]
+      );
+
+      if (userResponse.documents.length > 0) {
+        const userDoc = userResponse.documents[0];
+        await databases.updateDocument(
+          DATABASE_ID,
+          USERS_COLLECTION_ID,
+          userDoc.$id,
+          { lastLogin: new Date().toISOString() }
+        );
+      }
+    } catch (error) {
+      console.error("Error updating last login:", error);
+    }
+  }
+
+  // Check email verification status
+  async function checkEmailVerification() {
+    try {
+      const user = await account.get();
+      return user.emailVerification;
+    } catch (error) {
+      console.error("Error checking verification:", error);
+      return false;
+    }
+  }
+
+  // Update resume data with optimization
+  async function updateResumeData(newResumeFile = null, updatedData = null) {
+    try {
+      if (!user) throw new Error("User not logged in");
+
+      let resumeAnalysis = updatedData;
+      
+      if (newResumeFile) {
+        try {
+          resumeAnalysis = await processResumeWithAPI(newResumeFile);
+        } catch {
+          // Try Gemini fallback
+          try {
+            resumeAnalysis = await processResumeWithGemini(newResumeFile);
+          } catch {
+            throw new Error("Failed to process resume with both APIs");
+          }
         }
       }
-      return false;
+
+      if (!resumeAnalysis) throw new Error("No resume data to update");
+
+      const response = await databases.listDocuments(
+        DATABASE_ID,
+        USERS_COLLECTION_ID,
+        [Query.equal('userId', user.$id)]
+      );
+
+      if (response.documents.length > 0) {
+        const existingDoc = response.documents[0];
+        const currentVersion = existingDoc.resumeVersion || 1;
+        
+        const updatedProfile = await databases.updateDocument(
+          DATABASE_ID,
+          USERS_COLLECTION_ID,
+          existingDoc.$id,
+          {
+            // Update resume fields with optimization
+            name: resumeAnalysis.name || existingDoc.name,
+            phone: resumeAnalysis.phone || existingDoc.phone,
+            location: resumeAnalysis.location_preference || existingDoc.location,
+            experience_level: resumeAnalysis.experience_level || existingDoc.experience_level,
+            education: optimizeDataForStorage(resumeAnalysis.education, 2000),
+            summary: optimizeDataForStorage(resumeAnalysis.summary, 3000),
+            skills: extractKeySkills(resumeAnalysis.skills),
+            work_experience: optimizeDataForStorage(resumeAnalysis.work_experience, 7000),
+            projects: optimizeDataForStorage(resumeAnalysis.projects, 2000),
+            certifications: optimizeDataForStorage(resumeAnalysis.certifications, 1500),
+            languages: JSON.stringify((resumeAnalysis.languages || []).slice(0, 10)),
+            
+            // Update computed fields
+            profileCompleteness: calculateProfileCompleteness(resumeAnalysis),
+            totalExperience: calculateTotalExperience(resumeAnalysis.work_experience || []),
+            skillsCount: Math.min((resumeAnalysis.skills || []).length, 20),
+            projectsCount: Math.min((resumeAnalysis.projects || []).length, 10),
+            completenessScore: calculateResumeCompleteness(resumeAnalysis),
+            
+            // Update metadata
+            originalFileName: newResumeFile?.name || existingDoc.originalFileName,
+            resumeUploadedAt: new Date().toISOString(),
+            resumeVersion: currentVersion + 1,
+            hasResume: true,
+            profileComplete: true
+          }
+        );
+        
+        setUserProfile(updatedProfile);
+        setHasResume(true);
+        
+        console.log("Resume data updated successfully");
+        return updatedProfile;
+      }
     } catch (error) {
-      console.error("Error checking resume status:", error);
-      return false;
+      console.error("Error updating resume data:", error);
+      throw error;
     }
   }
 
-  // Update user profile information
-  async function updateUserProfile(updatedData) {
-    try {
-      // In a real app, you'd update this in your backend/Appwrite
-      setUser(prev => ({ ...prev, ...updatedData }));
-      
-      // Store updated data locally as backup
-      localStorage.setItem(`userProfile_${user?.$id}`, JSON.stringify(updatedData));
-      
-      return { success: true };
-    } catch (error) {
-      console.error("Error updating user profile:", error);
-      throw error;
-    }
+  // Utility functions for calculations (unchanged)
+  function calculateTotalExperience(workExperience) {
+    if (!workExperience || workExperience.length === 0) return 0;
+    return Array.isArray(workExperience) ? workExperience.length : 1;
+  }
+
+  function calculateResumeCompleteness(resumeData) {
+    if (!resumeData) return 0;
+
+    const fields = [
+      resumeData.name,
+      resumeData.email,
+      resumeData.phone,
+      resumeData.skills?.length > 0,
+      resumeData.education,
+      resumeData.work_experience?.length > 0,
+      resumeData.summary,
+      resumeData.location_preference
+    ];
+
+    const completedFields = fields.filter(field => 
+      field && field !== 'Not specified' && field !== 'flexible'
+    ).length;
+    
+    return Math.round((completedFields / fields.length) * 100);
+  }
+
+  function calculateProfileCompleteness(resumeData) {
+    return calculateResumeCompleteness(resumeData);
+  }
+
+  // Check if profile is complete
+  function isProfileComplete() {
+    return hasResume && userProfile && userProfile.name && 
+           userProfile.skills && Array.isArray(userProfile.skills) && userProfile.skills.length > 0 &&
+           userProfile.completenessScore >= 70;
+  }
+
+  // Get comprehensive user stats
+  function getUserStats() {
+    if (!userProfile) return null;
+
+    return {
+      skillsCount: userProfile.skillsCount || 0,
+      experienceLevel: userProfile.experience_level || 'entry',
+      projectsCount: userProfile.projectsCount || 0,
+      workExperienceCount: Array.isArray(userProfile.work_experience) ? userProfile.work_experience.length : 1,
+      certificationsCount: Array.isArray(userProfile.certifications) ? userProfile.certifications.length : 0,
+      languagesCount: Array.isArray(userProfile.languages) ? userProfile.languages.length : 0,
+      profileCompleteness: userProfile.completenessScore || 0,
+      totalExperience: userProfile.totalExperience || 0,
+      lastUpdated: userProfile.resumeUploadedAt
+    };
+  }
+
+  // Get dashboard data
+  function getDashboardData() {
+    if (!userProfile) return null;
+
+    return {
+      user: {
+        name: userProfile.name,
+        email: userProfile.email,
+        joinedDate: userProfile.createdAt,
+        lastLogin: userProfile.lastLogin,
+        isVerified: isVerified,
+        accountType: userProfile.accountType || 'jobseeker'
+      },
+      profile: {
+        completeness: userProfile.completenessScore || 0,
+        location: userProfile.location || 'flexible',
+        experienceLevel: userProfile.experience_level || 'entry',
+        summary: userProfile.summary || ''
+      },
+      stats: getUserStats(),
+      resume: {
+        fileName: userProfile.originalFileName,
+        uploadedAt: userProfile.resumeUploadedAt,
+        version: userProfile.resumeVersion || 1
+      }
+    };
   }
 
   async function logout() {
@@ -165,19 +545,20 @@ export function UserProvider({ children }) {
       setUser(null);
       setIsVerified(false);
       setHasResume(false);
-      setResumeData(null);
+      setUserProfile(null);
     } catch (error) {
       console.error("Logout error:", error);
+      // Clear state anyway
       setUser(null);
       setIsVerified(false);
       setHasResume(false);
-      setResumeData(null);
+      setUserProfile(null);
     }
   }
 
   async function checkVerificationStatus() {
     try {
-      const verified = await isEmailVerified();
+      const verified = await checkEmailVerification();
       setIsVerified(verified);
       return verified;
     } catch (error) {
@@ -193,17 +574,17 @@ export function UserProvider({ children }) {
       setUser(loggedInUser);
 
       // Check verification status
-      const verified = await isEmailVerified();
+      const verified = await checkEmailVerification();
       setIsVerified(verified);
 
-      // Check resume status
-      await checkResumeStatus();
+      // Load complete profile
+      await loadUserCompleteProfile(loggedInUser.$id);
     } catch (error) {
       // User is not logged in - this is normal
       setUser(null);
       setIsVerified(false);
       setHasResume(false);
-      setResumeData(null);
+      setUserProfile(null);
     } finally {
       setLoading(false);
     }
@@ -215,20 +596,29 @@ export function UserProvider({ children }) {
 
   return (
     <UserContext.Provider value={{
+      // User state
       current: user,
       loading,
       isVerified,
       hasResume,
-      resumeData,
-      registerWithEmail, // Legacy function
-      registerWithEmailAndPassword, // New function for resume upload
-      loginWithEmailAndPassword, // New function for login
-      updateResumeData, // New function to store resume data
-      clearResumeData, // New function to clear resume data
-      updateUserProfile, // New function to update profile
-      checkResumeStatus, // New function to check resume status
+      userProfile,
+      
+      // Authentication functions
+      registerWithResumeAndPassword,
+      loginWithEmailAndPassword,
       logout,
-      checkVerificationStatus
+      checkVerificationStatus,
+      
+      // Data functions
+      loadUserCompleteProfile,
+      updateResumeData,
+      getDashboardData,
+      getUserStats,
+      isProfileComplete,
+      
+      // Utility functions
+      processResumeWithAPI,
+      processResumeWithGemini
     }}>
       {children}
     </UserContext.Provider>

@@ -1,4 +1,4 @@
-import { Client, Account } from 'appwrite';
+import { Client, Account, Databases } from 'appwrite';
 
 // Initialize Appwrite client
 const client = new Client();
@@ -8,6 +8,7 @@ client
   .setProject('678c78a70025a41f7d95');    // Replace with your project ID
 
 export const account = new Account(client);
+export const databases = new Databases(client);
 
 // Function to check if user's email is verified
 export async function isEmailVerified() {

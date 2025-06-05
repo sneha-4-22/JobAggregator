@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
+import account from '../appwrite'
 import { 
   FiUser, 
   FiUpload, 
@@ -18,17 +19,18 @@ import {
   FiBook,
   FiBriefcase,
   FiSettings,
-  FiAlertCircle
+  FiAlertCircle,
+  FiCheckCircle
 } from 'react-icons/fi'
 import { useUser } from '../context/UserContext'
 
 function Settings() {
   const navigate = useNavigate()
   const { 
+    current,
     hasResume, 
-    resumeData, 
-    updateResumeData, 
-    clearResumeData,
+    userProfile,
+    updateResumeData,
     logout
   } = useUser()
 
@@ -36,15 +38,18 @@ function Settings() {
   const [isEditingProfile, setIsEditingProfile] = useState(false)
   const [profileForm, setProfileForm] = useState({
     name: '',
-    location_preference: '',
-    experience_level: '',
+    location: '',
+    experience_level: 'entry',
     education: '',
+    summary: '',
+    phone: '',
     skills: []
   })
 
   // Resume states
   const [uploadingResume, setUploadingResume] = useState(false)
   const [resumeError, setResumeError] = useState('')
+  const [resumeSuccess, setResumeSuccess] = useState('')
 
   // Password change states
   const [isChangingPassword, setIsChangingPassword] = useState(false)
@@ -64,50 +69,82 @@ function Settings() {
   // New skill input
   const [newSkill, setNewSkill] = useState('')
   const [profileLoading, setProfileLoading] = useState(false)
-
-  const API_BASE_URL = 'http://127.0.0.1:5000'
-
-  // Initialize profile form with current data
+  const [profileError, setProfileError] = useState('')
+  const [profileSuccess, setProfileSuccess] = useState('')
+   const isVerified = current?.emailVerification || false
+  // Initialize profile form with current userProfile data
   useEffect(() => {
-    if (resumeData) {
+    if (userProfile) {
+      // Parse skills if they're stored as JSON string
+      let skillsArray = []
+      if (userProfile.skills) {
+        if (Array.isArray(userProfile.skills)) {
+          skillsArray = userProfile.skills
+        } else if (typeof userProfile.skills === 'string') {
+          try {
+            skillsArray = JSON.parse(userProfile.skills)
+          } catch {
+            skillsArray = []
+          }
+        }
+      }
+
       setProfileForm({
-        name: resumeData.name || '',
-        location_preference: resumeData.location_preference || '',
-        experience_level: resumeData.experience_level || 'entry',
-        education: resumeData.education || '',
-        skills: resumeData.skills || []
+        name: userProfile.name || '',
+        location: userProfile.location || '',
+        experience_level: userProfile.experience_level || 'entry',
+        education: userProfile.education || '',
+        summary: userProfile.summary || '',
+        phone: userProfile.phone || '',
+        skills: skillsArray
       })
     }
-  }, [resumeData])
+  }, [userProfile])
 
   const handleProfileSave = async () => {
     setProfileLoading(true)
+    setProfileError('')
+    setProfileSuccess('')
+    
     try {
-      // Update resume data with new profile information
+      // Create updated data object matching your UserContext structure
       const updatedData = {
-        ...resumeData,
-        ...profileForm,
-        updatedAt: new Date().toISOString()
+        name: profileForm.name,
+        location_preference: profileForm.location,
+        experience_level: profileForm.experience_level,
+        education: profileForm.education,
+        summary: profileForm.summary,
+        phone: profileForm.phone,
+        skills: profileForm.skills,
+        // Preserve existing data
+        work_experience: userProfile?.work_experience || [],
+        projects: userProfile?.projects || [],
+        certifications: userProfile?.certifications || [],
+        languages: userProfile?.languages || []
       }
       
-      await updateResumeData(updatedData)
-      setIsEditingProfile(false)
+      // Use your UserContext updateResumeData function
+      await updateResumeData(null, updatedData)
       
-      // Show success message
-      alert('Profile updated successfully!')
+      setIsEditingProfile(false)
+      setProfileSuccess('Profile updated successfully!')
+      
+      // Clear success message after 3 seconds
+      setTimeout(() => setProfileSuccess(''), 3000)
     } catch (error) {
       console.error('Error updating profile:', error)
-      alert('Failed to update profile. Please try again.')
+      setProfileError('Failed to update profile. Please try again.')
     } finally {
       setProfileLoading(false)
     }
   }
 
   const handleAddSkill = () => {
-    if (newSkill.trim() && !profileForm.skills.includes(newSkill.trim())) {
+    const trimmedSkill = newSkill.trim()
+    if (trimmedSkill && !profileForm.skills.includes(trimmedSkill)) {
       setProfileForm({
         ...profileForm,
-        skills: [...profileForm.skills, newSkill.trim()]
+        skills: [...profileForm.skills, trimmedSkill]
       })
       setNewSkill('')
     }
@@ -131,46 +168,15 @@ function Settings() {
 
     setUploadingResume(true)
     setResumeError('')
-    const formData = new FormData()
-    formData.append('resume', file)
+    setResumeSuccess('')
 
     try {
-      const response = await fetch(`${API_BASE_URL}/api/analyze-resume`, {
-        method: 'POST',
-        body: formData
-      })
+      // Use your UserContext updateResumeData function with file
+      await updateResumeData(file, null)
+      setResumeSuccess('Resume updated successfully!')
       
-      if (!response.ok) {
-        let errorMessage = `Server error: ${response.status} ${response.statusText}`
-        try {
-          const errorData = await response.text()
-          if (errorData) {
-            try {
-              const parsedError = JSON.parse(errorData)
-              errorMessage = parsedError.error || errorMessage
-            } catch {
-              errorMessage = errorData
-            }
-          }
-        } catch {
-          // Ignore parsing errors, use default message
-        }
-        throw new Error(errorMessage)
-      }
-      
-      const contentType = response.headers.get("content-type")
-      if (!contentType || !contentType.includes("application/json")) {
-        throw new Error("Server did not return JSON response")
-      }
-      
-      const data = await response.json()
-      
-      if (data.success) {
-        await updateResumeData(data.analysis)
-        alert('Resume updated successfully!')
-      } else {
-        setResumeError('Error analyzing resume: ' + (data.error || 'Unknown error'))
-      }
+      // Clear success message after 3 seconds
+      setTimeout(() => setResumeSuccess(''), 3000)
     } catch (error) {
       console.error('Error uploading resume:', error)
       setResumeError('Error uploading resume: ' + error.message)
@@ -195,18 +201,23 @@ function Settings() {
     setPasswordError('')
 
     try {
-      // This would be your actual password change API call
-      // const response = await fetch(`${API_BASE_URL}/api/change-password`, {
-      //   method: 'POST',
-      //   headers: { 'Content-Type': 'application/json' },
-      //   body: JSON.stringify({
-      //     currentPassword: passwordForm.currentPassword,
-      //     newPassword: passwordForm.newPassword
-      //   })
-      // })
+      // Note: You'll need to implement password change in your UserContext
+      // For now, this is a placeholder
+      const response = await fetch('http://127.0.0.1:5000/api/change-password', {
+        method: 'POST',
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${current?.$id}` // Adjust based on your auth setup
+        },
+        body: JSON.stringify({
+          currentPassword: passwordForm.currentPassword,
+          newPassword: passwordForm.newPassword
+        })
+      })
 
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000))
+      if (!response.ok) {
+        throw new Error('Failed to change password')
+      }
       
       alert('Password changed successfully!')
       setPasswordForm({
@@ -225,8 +236,22 @@ function Settings() {
   const handleDeleteResume = async () => {
     if (window.confirm('Are you sure you want to delete your resume data? This action cannot be undone.')) {
       try {
-        await clearResumeData()
-        alert('Resume data deleted successfully!')
+        // You might want to add a clearResumeData function to your UserContext
+        // For now, this would be a custom implementation
+        const response = await fetch('http://127.0.0.1:5000/api/delete-resume', {
+          method: 'DELETE',
+          headers: {
+            'Authorization': `Bearer ${current?.$id}`
+          }
+        })
+
+        if (response.ok) {
+          alert('Resume data deleted successfully!')
+          // Reload user profile
+          window.location.reload()
+        } else {
+          throw new Error('Failed to delete resume')
+        }
       } catch {
         alert('Failed to delete resume data. Please try again.')
       }
@@ -239,6 +264,15 @@ function Settings() {
       navigate('/')
     }
   }
+
+  // Get user stats for display
+  const userStats = userProfile ? {
+    skillsCount: userProfile.skillsCount || (Array.isArray(userProfile.skills) ? userProfile.skills.length : 0),
+    projectsCount: userProfile.projectsCount || 0,
+    completenessScore: userProfile.completenessScore || 0,
+    experienceLevel: userProfile.experience_level || 'entry',
+    totalExperience: userProfile.totalExperience || 0
+  } : null
 
   return (
     <div className="pt-20 pb-16 min-h-screen bg-gray-900">
@@ -261,8 +295,41 @@ function Settings() {
                 <p className="text-gray-300 mt-1">Manage your profile and account preferences</p>
               </div>
             </div>
+            {userStats && (
+              <div className="text-right">
+                <div className="text-sm text-gray-400">Profile Completeness</div>
+                <div className="text-2xl font-bold text-green-400">{userStats.completenessScore}%</div>
+              </div>
+            )}
           </div>
         </div>
+
+        {/* Success/Error Messages */}
+        {profileSuccess && (
+          <motion.div
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="mb-6 p-4 bg-green-900/20 border border-green-500/30 rounded-lg"
+          >
+            <div className="flex items-center">
+              <FiCheckCircle className="mr-2 text-green-400" size={20} />
+              <p className="text-green-300">{profileSuccess}</p>
+            </div>
+          </motion.div>
+        )}
+
+        {profileError && (
+          <motion.div
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="mb-6 p-4 bg-red-900/20 border border-red-500/30 rounded-lg"
+          >
+            <div className="flex items-center">
+              <FiAlertCircle className="mr-2 text-red-400" size={20} />
+              <p className="text-red-300">{profileError}</p>
+            </div>
+          </motion.div>
+        )}
 
         <div className="space-y-8">
           {/* Profile Section */}
@@ -292,13 +359,25 @@ function Settings() {
                 <div className="space-y-6">
                   {/* Name */}
                   <div>
-                    <label className="block text-sm font-medium text-gray-300 mb-2">Name</label>
+                    <label className="block text-sm font-medium text-gray-300 mb-2">Full Name</label>
                     <input
                       type="text"
                       value={profileForm.name}
                       onChange={(e) => setProfileForm({ ...profileForm, name: e.target.value })}
                       className="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-white"
                       placeholder="Enter your full name"
+                    />
+                  </div>
+
+                  {/* Phone */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-300 mb-2">Phone Number</label>
+                    <input
+                      type="tel"
+                      value={profileForm.phone}
+                      onChange={(e) => setProfileForm({ ...profileForm, phone: e.target.value })}
+                      className="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-white"
+                      placeholder="Enter your phone number"
                     />
                   </div>
 
@@ -320,24 +399,36 @@ function Settings() {
                   {/* Education */}
                   <div>
                     <label className="block text-sm font-medium text-gray-300 mb-2">Education</label>
-                    <input
-                      type="text"
+                    <textarea
                       value={profileForm.education}
                       onChange={(e) => setProfileForm({ ...profileForm, education: e.target.value })}
+                      rows={3}
                       className="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-white"
-                      placeholder="e.g., Bachelor's in Computer Science"
+                      placeholder="e.g., Bachelor's in Computer Science from XYZ University"
                     />
                   </div>
 
-                  {/* Location Preference */}
+                  {/* Location */}
                   <div>
                     <label className="block text-sm font-medium text-gray-300 mb-2">Location Preference</label>
                     <input
                       type="text"
-                      value={profileForm.location_preference}
-                      onChange={(e) => setProfileForm({ ...profileForm, location_preference: e.target.value })}
+                      value={profileForm.location}
+                      onChange={(e) => setProfileForm({ ...profileForm, location: e.target.value })}
                       className="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-white"
                       placeholder="e.g., Remote, San Francisco, New York"
+                    />
+                  </div>
+
+                  {/* Summary */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-300 mb-2">Professional Summary</label>
+                    <textarea
+                      value={profileForm.summary}
+                      onChange={(e) => setProfileForm({ ...profileForm, summary: e.target.value })}
+                      rows={4}
+                      className="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-white"
+                      placeholder="Brief summary of your professional background and goals"
                     />
                   </div>
 
@@ -389,7 +480,10 @@ function Settings() {
                       {profileLoading ? 'Saving...' : 'Save Changes'}
                     </button>
                     <button
-                      onClick={() => setIsEditingProfile(false)}
+                      onClick={() => {
+                        setIsEditingProfile(false)
+                        setProfileError('')
+                      }}
                       className="flex items-center px-6 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded-lg transition-colors"
                     >
                       <FiX className="mr-2" size={16} />
@@ -404,28 +498,28 @@ function Settings() {
                       <FiUser className="mr-2 text-gray-400" size={16} />
                       <span className="text-sm text-gray-400">Name</span>
                     </div>
-                    <p className="font-medium text-white">{resumeData.name || 'Not specified'}</p>
+                    <p className="font-medium text-white">{userProfile?.name || 'Not specified'}</p>
                   </div>
                   <div>
                     <div className="flex items-center mb-2">
                       <FiBriefcase className="mr-2 text-gray-400" size={16} />
                       <span className="text-sm text-gray-400">Experience Level</span>
                     </div>
-                    <p className="font-medium capitalize text-white">{resumeData.experience_level || 'Entry'}</p>
+                    <p className="font-medium capitalize text-white">{userProfile?.experience_level || 'Entry'}</p>
                   </div>
                   <div>
                     <div className="flex items-center mb-2">
                       <FiBook className="mr-2 text-gray-400" size={16} />
                       <span className="text-sm text-gray-400">Education</span>
                     </div>
-                    <p className="font-medium text-white">{resumeData.education || 'Not specified'}</p>
+                    <p className="font-medium text-white">{userProfile?.education ? (userProfile.education.length > 100 ? userProfile.education.substring(0, 100) + '...' : userProfile.education) : 'Not specified'}</p>
                   </div>
                   <div>
                     <div className="flex items-center mb-2">
                       <FiMapPin className="mr-2 text-gray-400" size={16} />
-                      <span className="text-sm text-gray-400">Location Preference</span>
+                      <span className="text-sm text-gray-400">Location</span>
                     </div>
-                    <p className="font-medium text-white">{resumeData.location_preference || 'Flexible'}</p>
+                    <p className="font-medium text-white">{userProfile?.location || 'Flexible'}</p>
                   </div>
                 </div>
               )
@@ -436,18 +530,34 @@ function Settings() {
               </div>
             )}
 
-            {hasResume && resumeData.skills && resumeData.skills.length > 0 && !isEditingProfile && (
+            {hasResume && userProfile?.skills && Array.isArray(userProfile.skills) && userProfile.skills.length > 0 && !isEditingProfile && (
               <div className="mt-6">
                 <div className="flex items-center mb-3">
-                  <span className="text-sm text-gray-400">Skills</span>
+                  <span className="text-sm text-gray-400">Skills ({userProfile.skills.length})</span>
                 </div>
                 <div className="flex flex-wrap gap-2">
-                  {resumeData.skills.map((skill, index) => (
+                  {userProfile.skills.slice(0, 20).map((skill, index) => (
                     <span key={index} className="bg-blue-900/50 text-blue-200 px-3 py-1 rounded-md text-sm border border-blue-500/30">
                       {skill}
                     </span>
                   ))}
+                  {userProfile.skills.length > 20 && (
+                    <span className="bg-gray-700 text-gray-300 px-3 py-1 rounded-md text-sm">
+                      +{userProfile.skills.length - 20} more
+                    </span>
+                  )}
                 </div>
+              </div>
+            )}
+
+            {hasResume && userProfile?.summary && !isEditingProfile && (
+              <div className="mt-6">
+                <div className="flex items-center mb-3">
+                  <span className="text-sm text-gray-400">Professional Summary</span>
+                </div>
+                <p className="text-gray-300 text-sm leading-relaxed">
+                  {userProfile.summary.length > 300 ? userProfile.summary.substring(0, 300) + '...' : userProfile.summary}
+                </p>
               </div>
             )}
           </motion.div>
@@ -470,7 +580,13 @@ function Settings() {
                   <div>
                     <p className="text-green-300 font-medium">Resume Uploaded</p>
                     <p className="text-green-200 text-sm">
-                      Last updated: {resumeData.updatedAt ? new Date(resumeData.updatedAt).toLocaleDateString() : 'Unknown'}
+                      File: {userProfile?.originalFileName || 'resume.pdf'}
+                    </p>
+                    <p className="text-green-200 text-sm">
+                      Last updated: {userProfile?.resumeUploadedAt ? new Date(userProfile.resumeUploadedAt).toLocaleDateString() : 'Unknown'}
+                    </p>
+                    <p className="text-green-200 text-sm">
+                      Version: {userProfile?.resumeVersion || 1}
                     </p>
                   </div>
                   <FiCheck className="text-green-400" size={24} />
@@ -515,6 +631,15 @@ function Settings() {
                     className="hidden"
                   />
                 </label>
+              </div>
+            )}
+
+            {resumeSuccess && (
+              <div className="mt-4 p-3 bg-green-900/20 border border-green-500/30 rounded-lg">
+                <div className="flex items-center">
+                  <FiCheckCircle className="mr-2 text-green-400" size={16} />
+                  <p className="text-green-300 text-sm">{resumeSuccess}</p>
+                </div>
               </div>
             )}
 
@@ -622,19 +747,23 @@ function Settings() {
                   </div>
                 )}
 
-                <div className="flex gap-3 pt-4">
+                <div className="flex gap-3">
                   <button
                     onClick={handlePasswordChange}
                     disabled={passwordLoading}
                     className="flex items-center px-6 py-2 bg-green-600 hover:bg-green-700 disabled:bg-green-800 text-white rounded-lg transition-colors"
                   >
                     {passwordLoading ? <FiLoader className="mr-2 animate-spin" size={16} /> : <FiSave className="mr-2" size={16} />}
-                    {passwordLoading ? 'Changing...' : 'Change Password'}
+                    {passwordLoading ? 'Updating...' : 'Update Password'}
                   </button>
                   <button
                     onClick={() => {
                       setIsChangingPassword(false)
-                      setPasswordForm({ currentPassword: '', newPassword: '', confirmPassword: '' })
+                      setPasswordForm({
+                        currentPassword: '',
+                        newPassword: '',
+                        confirmPassword: ''
+                      })
                       setPasswordError('')
                     }}
                     className="flex items-center px-6 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded-lg transition-colors"
@@ -646,29 +775,132 @@ function Settings() {
               </div>
             ) : (
               <div className="text-gray-400">
-                <p>Keep your account secure by using a strong password.</p>
-                <p className="text-sm mt-2">Last password change: Never</p>
+                <p>Your password is secure. Click &quot;Change Password&quot; to update it.</p>
+                <p className="text-sm mt-2">Last password change: Unknown</p>
               </div>
             )}
           </motion.div>
+
+          {/* Account Statistics */}
+          {userStats && (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.3 }}
+              className="bg-gray-800 rounded-xl shadow-lg p-6 border border-gray-700"
+            >
+              <div className="flex items-center mb-6">
+                <FiBriefcase className="mr-3 text-purple-400" size={24} />
+                <h2 className="text-xl font-semibold text-white">Account Statistics</h2>
+              </div>
+
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div className="text-center p-4 bg-gray-700/50 rounded-lg">
+                  <div className="text-2xl font-bold text-blue-400">{userStats.skillsCount}</div>
+                  <div className="text-sm text-gray-400">Skills</div>
+                </div>
+                <div className="text-center p-4 bg-gray-700/50 rounded-lg">
+                  <div className="text-2xl font-bold text-green-400">{userStats.projectsCount}</div>
+                  <div className="text-sm text-gray-400">Projects</div>
+                </div>
+                <div className="text-center p-4 bg-gray-700/50 rounded-lg">
+                  <div className="text-2xl font-bold text-yellow-400">{userStats.totalExperience}</div>
+                  <div className="text-sm text-gray-400">Experience</div>
+                </div>
+                <div className="text-center p-4 bg-gray-700/50 rounded-lg">
+                  <div className="text-2xl font-bold text-purple-400">{userStats.completenessScore}%</div>
+                  <div className="text-sm text-gray-400">Complete</div>
+                </div>
+              </div>
+
+              {userProfile?.resumeUploadedAt && (
+                <div className="mt-4 pt-4 border-t border-gray-700">
+                  <p className="text-sm text-gray-400">
+                    Profile last updated: {new Date(userProfile.resumeUploadedAt).toLocaleDateString()}
+                  </p>
+                </div>
+              )}
+            </motion.div>
+          )}
 
           {/* Account Actions */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.3 }}
+            transition={{ delay: 0.4 }}
             className="bg-gray-800 rounded-xl shadow-lg p-6 border border-gray-700"
           >
-            <h2 className="text-xl font-semibold text-white mb-6">Account Actions</h2>
-            
+            <div className="flex items-center mb-6">
+              <FiSettings className="mr-3 text-red-400" size={24} />
+              <h2 className="text-xl font-semibold text-white">Account Actions</h2>
+            </div>
+
             <div className="space-y-4">
-              <button
-                onClick={handleLogout}
-                className="w-full flex items-center justify-center px-4 py-3 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors"
-              >
-                <FiArrowLeft className="mr-2" />
-                Logout
-              </button>
+              {/* Email Verification Status */}
+              <div className="flex items-center justify-between p-4 bg-gray-700/30 rounded-lg">
+                <div className="flex items-center">
+                  <div className={`w-3 h-3 rounded-full mr-3 ${isVerified ? 'bg-green-400' : 'bg-yellow-400'}`}></div>
+                  <div>
+                    <p className="text-white font-medium">Email Verification</p>
+                    <p className="text-sm text-gray-400">
+                      {isVerified ? 'Your email is verified' : 'Please verify your email address'}
+                    </p>
+                  </div>
+                </div>
+                {!isVerified && (
+                  <button
+                    onClick={async () => {
+                      try {
+                        const url = window.location.origin + '/verify-email';
+                        await account.createVerification(url);
+                        alert('Verification email sent!');
+                      } catch {
+                        alert('Failed to send verification email');
+                      }
+                    }}
+                    className="px-4 py-2 bg-yellow-600 hover:bg-yellow-700 text-white rounded-lg transition-colors"
+                  >
+                    Resend
+                  </button>
+                )}
+              </div>
+
+              {/* Export Data */}
+              <div className="flex items-center justify-between p-4 bg-gray-700/30 rounded-lg">
+                <div>
+                  <p className="text-white font-medium">Export Your Data</p>
+                  <p className="text-sm text-gray-400">Download a copy of your profile data</p>
+                </div>
+                <button
+                  onClick={() => {
+                    const dataStr = JSON.stringify(userProfile, null, 2);
+                    const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);
+                    const exportFileDefaultName = 'my-profile-data.json';
+                    
+                    const linkElement = document.createElement('a');
+                    linkElement.setAttribute('href', dataUri);
+                    linkElement.setAttribute('download', exportFileDefaultName);
+                    linkElement.click();
+                  }}
+                  className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
+                >
+                  Export
+                </button>
+              </div>
+
+              {/* Logout */}
+              <div className="flex items-center justify-between p-4 bg-red-900/20 border border-red-500/30 rounded-lg">
+                <div>
+                  <p className="text-white font-medium">Sign Out</p>
+                  <p className="text-sm text-gray-400">Sign out of your account</p>
+                </div>
+                <button
+                  onClick={handleLogout}
+                  className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors"
+                >
+                  Sign Out
+                </button>
+              </div>
             </div>
           </motion.div>
         </div>

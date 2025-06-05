@@ -31,7 +31,7 @@ function App() {
         <Route path="login" element={<Login />} />
         <Route path="upload-resume" element={<UploadResume />} />
         <Route path="verify-email" element={<VerifyEmail />} />
-        <Route path="settings" element={<Settings />} />
+        <Route path="profile" element={<Settings />} />
         {/* Protected routes */}
         <Route element={<ProtectedRoute isAllowed={!!current} redirectPath="/" />}>
           <Route 
