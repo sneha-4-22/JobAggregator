@@ -12,6 +12,8 @@ export function UserProvider({ children }) {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [isVerified, setIsVerified] = useState(false);
+  const [hasResume, setHasResume] = useState(false);
+  const [resumeData, setResumeData] = useState(null);
 
   // Register user with email and password (for resume upload flow)
   async function registerWithEmailAndPassword(email, password, name = "Resume User") {
@@ -66,6 +68,9 @@ export function UserProvider({ children }) {
       const verified = await isEmailVerified();
       setIsVerified(verified);
 
+      // Check if user has resume data
+      await checkResumeStatus();
+
       return { success: true, user: loggedInUser };
     } catch (error) {
       console.error("Login error:", error);
@@ -84,15 +89,89 @@ export function UserProvider({ children }) {
     return await registerWithEmailAndPassword(email, randomPassword, name);
   }
 
+  // Store resume data after successful analysis
+  async function updateResumeData(data) {
+    try {
+      setResumeData(data);
+      setHasResume(true);
+      
+      // Store in localStorage as backup
+      localStorage.setItem(`resumeData_${user?.$id}`, JSON.stringify({
+        ...data,
+        uploadedAt: new Date().toISOString()
+      }));
+      
+      console.log("Resume data updated successfully");
+    } catch (error) {
+      console.error("Error updating resume data:", error);
+    }
+  }
+
+  // Clear resume data
+  async function clearResumeData() {
+    try {
+      setResumeData(null);
+      setHasResume(false);
+      
+      // Remove from localStorage
+      if (user?.$id) {
+        localStorage.removeItem(`resumeData_${user.$id}`);
+      }
+      
+      console.log("Resume data cleared successfully");
+    } catch (error) {
+      console.error("Error clearing resume data:", error);
+    }
+  }
+
+  // Check if user has resume data
+  async function checkResumeStatus() {
+    try {
+      if (user?.$id) {
+        const storedData = localStorage.getItem(`resumeData_${user.$id}`);
+        if (storedData) {
+          const parsedData = JSON.parse(storedData);
+          setResumeData(parsedData);
+          setHasResume(true);
+          return true;
+        }
+      }
+      return false;
+    } catch (error) {
+      console.error("Error checking resume status:", error);
+      return false;
+    }
+  }
+
+  // Update user profile information
+  async function updateUserProfile(updatedData) {
+    try {
+      // In a real app, you'd update this in your backend/Appwrite
+      setUser(prev => ({ ...prev, ...updatedData }));
+      
+      // Store updated data locally as backup
+      localStorage.setItem(`userProfile_${user?.$id}`, JSON.stringify(updatedData));
+      
+      return { success: true };
+    } catch (error) {
+      console.error("Error updating user profile:", error);
+      throw error;
+    }
+  }
+
   async function logout() {
     try {
       await account.deleteSession("current");
       setUser(null);
       setIsVerified(false);
+      setHasResume(false);
+      setResumeData(null);
     } catch (error) {
       console.error("Logout error:", error);
       setUser(null);
       setIsVerified(false);
+      setHasResume(false);
+      setResumeData(null);
     }
   }
 
@@ -116,10 +195,15 @@ export function UserProvider({ children }) {
       // Check verification status
       const verified = await isEmailVerified();
       setIsVerified(verified);
+
+      // Check resume status
+      await checkResumeStatus();
     } catch (error) {
       // User is not logged in - this is normal
       setUser(null);
       setIsVerified(false);
+      setHasResume(false);
+      setResumeData(null);
     } finally {
       setLoading(false);
     }
@@ -134,9 +218,15 @@ export function UserProvider({ children }) {
       current: user,
       loading,
       isVerified,
+      hasResume,
+      resumeData,
       registerWithEmail, // Legacy function
       registerWithEmailAndPassword, // New function for resume upload
       loginWithEmailAndPassword, // New function for login
+      updateResumeData, // New function to store resume data
+      clearResumeData, // New function to clear resume data
+      updateUserProfile, // New function to update profile
+      checkResumeStatus, // New function to check resume status
       logout,
       checkVerificationStatus
     }}>

@@ -8,6 +8,7 @@ import Dashboard from './pages/Dashboard'
 import NotFound from './pages/NotFound'
 import ProtectedRoute from './components/ProtectedRoute'
 import Login from './pages/Login'
+import Settings from './pages/Settings'
 function App() {
   const { current, loading, isVerified } = useUser()
   
@@ -30,7 +31,7 @@ function App() {
         <Route path="login" element={<Login />} />
         <Route path="upload-resume" element={<UploadResume />} />
         <Route path="verify-email" element={<VerifyEmail />} />
-
+        <Route path="settings" element={<Settings />} />
         {/* Protected routes */}
         <Route element={<ProtectedRoute isAllowed={!!current} redirectPath="/" />}>
           <Route 

@@ -1,29 +1,31 @@
 import { useState, useEffect } from 'react'
-import { FiSearch, FiFilter, FiMapPin, FiBriefcase, FiClock, FiBookmark, FiCheckCircle, FiUpload, FiUser, FiExternalLink } from 'react-icons/fi'
+import { FiSearch, FiFilter, FiMapPin, FiBriefcase, FiClock, FiBookmark, FiCheckCircle, FiUpload, FiUser, FiExternalLink, FiSettings, FiEdit } from 'react-icons/fi'
+import { useUser } from '../context/UserContext'
 
 function Dashboard() {
   const [jobs, setJobs] = useState([])
   const [searchTerm, setSearchTerm] = useState('')
   const [loading, setLoading] = useState(false)
   const [savedJobs, setSavedJobs] = useState([])
-  const [userProfile, setUserProfile] = useState(null)
   const [resumeAnalyzing, setResumeAnalyzing] = useState(false)
   const [filters, setFilters] = useState({
     jobType: 'internship',
     location: 'all'
   })
 
+  const { current: user, hasResume, resumeData, updateResumeData } = useUser()
+
   // Configure API base URL - change this to match your Flask server
   const API_BASE_URL = 'http://127.0.0.1:5000'
 
   // Load initial jobs
   useEffect(() => {
-    if (userProfile) {
+    if (hasResume && resumeData) {
       fetchPersonalizedJobs()
     } else {
       fetchDefaultJobs()
     }
-  }, [userProfile, filters])
+  }, [hasResume, resumeData, filters])
 
   const fetchDefaultJobs = async () => {
     setLoading(true)
@@ -36,12 +38,10 @@ function Dashboard() {
       
       const response = await fetch(`${API_BASE_URL}/api/search-jobs?${params}`)
       
-      // Check if response is ok before trying to parse JSON
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`)
       }
       
-      // Check if response has content
       const contentType = response.headers.get("content-type")
       if (!contentType || !contentType.includes("application/json")) {
         throw new Error("Response is not JSON")
@@ -72,19 +72,17 @@ function Dashboard() {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          skills: userProfile.skills || [],
-          location: filters.location === 'all' ? userProfile.location_preference : filters.location,
+          skills: resumeData?.skills || [],
+          location: filters.location === 'all' ? resumeData?.location_preference || 'flexible' : filters.location,
           job_type: filters.jobType,
-          experience_level: userProfile.experience_level || 'entry'
+          experience_level: resumeData?.experience_level || 'entry'
         })
       })
       
-      // Check if response is ok before trying to parse JSON
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`)
       }
       
-      // Check if response has content
       const contentType = response.headers.get("content-type")
       if (!contentType || !contentType.includes("application/json")) {
         throw new Error("Response is not JSON")
@@ -125,18 +123,15 @@ function Dashboard() {
         body: formData
       })
       
-      // First check if the response is ok
       if (!response.ok) {
-        // Try to get error message from response
         let errorMessage = `Server error: ${response.status} ${response.statusText}`
         try {
-          const errorData = await response.text() // Use text() instead of json() for error responses
+          const errorData = await response.text()
           if (errorData) {
             try {
               const parsedError = JSON.parse(errorData)
               errorMessage = parsedError.error || errorMessage
             } catch {
-              // If not JSON, use the text as is
               errorMessage = errorData
             }
           }
@@ -146,7 +141,6 @@ function Dashboard() {
         throw new Error(errorMessage)
       }
       
-      // Check content type before parsing as JSON
       const contentType = response.headers.get("content-type")
       if (!contentType || !contentType.includes("application/json")) {
         throw new Error("Server did not return JSON response")
@@ -155,7 +149,7 @@ function Dashboard() {
       const data = await response.json()
       
       if (data.success) {
-        setUserProfile(data.analysis)
+        await updateResumeData(data.analysis)
         alert('Resume analyzed successfully! Getting personalized job recommendations...')
       } else {
         alert('Error analyzing resume: ' + (data.error || 'Unknown error'))
@@ -165,7 +159,6 @@ function Dashboard() {
       alert('Error uploading resume: ' + error.message)
     } finally {
       setResumeAnalyzing(false)
-      // Clear the file input
       event.target.value = ''
     }
   }
@@ -201,7 +194,7 @@ function Dashboard() {
   }
 
   const handleSearch = () => {
-    if (userProfile) {
+    if (hasResume && resumeData) {
       fetchPersonalizedJobs()
     } else {
       fetchDefaultJobs()
@@ -230,22 +223,37 @@ function Dashboard() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header Section */}
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-white mb-2">
-            {userProfile ? `Welcome, ${userProfile.name || 'User'}!` : 'Job & Internship Dashboard'}
-          </h1>
-          <p className="text-gray-300">
-            {userProfile 
-              ? 'Here are personalized job and internship recommendations based on your resume.'
-              : 'Upload your resume to get personalized job recommendations, or browse available opportunities.'
-            }
-          </p>
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-3xl font-bold text-white mb-2">
+                {hasResume ? `Welcome back, ${resumeData?.name || user?.name || 'User'}!` : 'Job & Internship Dashboard'}
+              </h1>
+              <p className="text-gray-300">
+                {hasResume 
+                  ? 'Here are personalized job and internship recommendations based on your resume.'
+                  : 'Upload your resume to get personalized job recommendations, or browse available opportunities.'
+                }
+              </p>
+            </div>
+            <div className="flex items-center space-x-4">
+              {hasResume && (
+                <button 
+                  onClick={() => window.location.href = '/settings'}
+                  className="flex items-center px-4 py-2 bg-gray-700 hover:bg-gray-600 text-white rounded-lg transition-colors border border-gray-600"
+                >
+                  <FiSettings className="mr-2" />
+                  Settings
+                </button>
+              )}
+            </div>
+          </div>
           <div className="mt-2 text-sm text-gray-400">
             API Status: <span className="font-medium text-blue-400">Connected to {API_BASE_URL}</span>
           </div>
         </div>
 
-        {/* Resume Upload Section */}
-        {!userProfile && (
+        {/* Resume Upload Section - Only show if user doesn't have resume */}
+        {!hasResume && (
           <div className="mb-8 bg-gray-800 rounded-xl shadow-lg p-6 border-2 border-dashed border-blue-500/50 hover:border-blue-400 transition-colors">
             <div className="text-center">
               <div className="inline-flex items-center justify-center w-16 h-16 mb-4 rounded-full bg-gradient-to-r from-blue-500 to-purple-600 text-white shadow-lg">
@@ -272,47 +280,57 @@ function Dashboard() {
           </div>
         )}
 
-        {/* User Profile Section */}
-        {userProfile && (
+        {/* User Profile Section - Show if user has resume */}
+        {hasResume && resumeData && (
           <div className="mb-8 bg-gray-800 rounded-xl shadow-lg p-6 border border-gray-700">
-            <div className="flex items-center mb-4">
-              <FiUser className="mr-2 text-blue-400" />
-              <h3 className="text-lg font-semibold text-white">Your Profile</h3>
-              <button 
-                onClick={() => setUserProfile(null)}
-                className="ml-auto text-sm text-gray-400 hover:text-red-400 transition-colors"
-              >
-                Clear Profile
-              </button>
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center">
+                <FiUser className="mr-2 text-blue-400" />
+                <h3 className="text-lg font-semibold text-white">Your Profile</h3>
+              </div>
+              <div className="flex items-center space-x-2">
+                <button 
+                  onClick={() => window.location.href = '/settings'}
+                  className="flex items-center text-sm text-gray-400 hover:text-blue-400 transition-colors"
+                >
+                  <FiEdit className="mr-1" />
+                  Edit Profile
+                </button>
+              </div>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
               <div>
                 <p className="text-sm text-gray-400">Name</p>
-                <p className="font-medium text-white">{userProfile.name || 'Not specified'}</p>
+                <p className="font-medium text-white">{resumeData.name || 'Not specified'}</p>
               </div>
               <div>
                 <p className="text-sm text-gray-400">Experience Level</p>
-                <p className="font-medium capitalize text-white">{userProfile.experience_level || 'Entry'}</p>
+                <p className="font-medium capitalize text-white">{resumeData.experience_level || 'Entry'}</p>
               </div>
               <div>
                 <p className="text-sm text-gray-400">Education</p>
-                <p className="font-medium text-white">{userProfile.education || 'Not specified'}</p>
+                <p className="font-medium text-white">{resumeData.education || 'Not specified'}</p>
               </div>
               <div>
                 <p className="text-sm text-gray-400">Location Preference</p>
-                <p className="font-medium text-white">{userProfile.location_preference || 'Flexible'}</p>
+                <p className="font-medium text-white">{resumeData.location_preference || 'Flexible'}</p>
               </div>
             </div>
-            {userProfile.skills && userProfile.skills.length > 0 && (
+            {resumeData.skills && resumeData.skills.length > 0 && (
               <div className="mt-4">
                 <p className="text-sm text-gray-400 mb-2">Skills</p>
                 <div className="flex flex-wrap gap-2">
-                  {userProfile.skills.map((skill, index) => (
+                  {resumeData.skills.map((skill, index) => (
                     <span key={index} className="bg-blue-900/50 text-blue-200 px-3 py-1 rounded-md text-sm border border-blue-500/30">
                       {skill}
                     </span>
                   ))}
                 </div>
+              </div>
+            )}
+            {resumeData.uploadedAt && (
+              <div className="mt-4 text-sm text-gray-400">
+                Resume uploaded: {new Date(resumeData.uploadedAt).toLocaleDateString()}
               </div>
             )}
           </div>
@@ -380,7 +398,7 @@ function Dashboard() {
         <div className="mb-8">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-2xl font-semibold text-white">
-              {userProfile ? 'Recommended for You' : 'Available Opportunities'}
+              {hasResume ? 'Recommended for You' : 'Available Opportunities'}
             </h2>
             {jobs.length > 0 && (
               <p className="text-gray-300">{filterJobs().length} jobs found</p>
@@ -531,7 +549,7 @@ function Dashboard() {
                         setSearchTerm('')
                         setFilters({ jobType: 'internship', location: 'all' })
                         setTimeout(() => {
-                          if (userProfile) {
+                          if (hasResume && resumeData) {
                             fetchPersonalizedJobs()
                           } else {
                             fetchDefaultJobs()
@@ -549,7 +567,7 @@ function Dashboard() {
         </div>
 
         {/* Tips Section */}
-        {userProfile && (
+        {hasResume && resumeData && (
           <div className="bg-gray-800 rounded-xl shadow-lg p-6 border border-gray-700">
             <h3 className="text-lg font-semibold text-white mb-4">
               💡 Job Search Tips Based on Your Profile
