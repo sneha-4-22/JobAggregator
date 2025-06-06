@@ -726,13 +726,15 @@ const handleRemoveProject = (projectIndex) => {
                 </div>
               </div>
             )}
-{hasResume && userProfile?.projects && Array.isArray(userProfile.projects) && userProfile.projects.length > 0 && !isEditingProfile && (
+
+
+{hasResume && profileForm.projects && Array.isArray(profileForm.projects) && profileForm.projects.length > 0 && !isEditingProfile && (
   <div className="mt-6">
     <div className="flex items-center mb-3">
-      <span className="text-sm text-gray-400">Projects ({userProfile.projects.length})</span>
+      <span className="text-sm text-gray-400">Projects ({profileForm.projects.length})</span>
     </div>
     <div className="space-y-3">
-      {userProfile.projects.slice(0, 3).map((project, index) => (
+      {profileForm.projects.slice(0, 3).map((project, index) => (
         <div key={index} className="bg-gray-700/30 border border-gray-600 rounded-lg p-4">
           <h4 className="font-medium text-white text-sm">{project.name}</h4>
           <p className="text-gray-300 text-xs mt-1 leading-relaxed">
@@ -755,10 +757,10 @@ const handleRemoveProject = (projectIndex) => {
           <p className="text-gray-400 text-xs mt-2">{project.duration}</p>
         </div>
       ))}
-      {userProfile.projects.length > 3 && (
+      {profileForm.projects.length > 3 && (
         <div className="text-center">
           <span className="bg-gray-700 text-gray-300 px-3 py-1 rounded-md text-xs">
-            +{userProfile.projects.length - 3} more projects
+            +{profileForm.projects.length - 3} more projects
           </span>
         </div>
       )}
