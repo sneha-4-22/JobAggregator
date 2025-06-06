@@ -65,13 +65,15 @@ function Settings() {
   })
   const [passwordError, setPasswordError] = useState('')
   const [passwordLoading, setPasswordLoading] = useState(false)
+  const [passwordSuccess, setPasswordSuccess] = useState('')
 
   // New skill input
   const [newSkill, setNewSkill] = useState('')
   const [profileLoading, setProfileLoading] = useState(false)
   const [profileError, setProfileError] = useState('')
   const [profileSuccess, setProfileSuccess] = useState('')
-   const isVerified = current?.emailVerification || false
+  const isVerified = current?.emailVerification || false
+
   // Initialize profile form with current userProfile data
   useEffect(() => {
     if (userProfile) {
@@ -102,42 +104,59 @@ function Settings() {
   }, [userProfile])
 
   const handleProfileSave = async () => {
-    setProfileLoading(true)
-    setProfileError('')
-    setProfileSuccess('')
-    
-    try {
-      // Create updated data object matching your UserContext structure
-      const updatedData = {
-        name: profileForm.name,
-        location_preference: profileForm.location,
-        experience_level: profileForm.experience_level,
-        education: profileForm.education,
-        summary: profileForm.summary,
-        phone: profileForm.phone,
-        skills: profileForm.skills,
-        // Preserve existing data
-        work_experience: userProfile?.work_experience || [],
-        projects: userProfile?.projects || [],
-        certifications: userProfile?.certifications || [],
-        languages: userProfile?.languages || []
+  setProfileLoading(true)
+  setProfileError('')
+  setProfileSuccess('')
+  
+  try {
+    // Ensure arrays are properly handled
+    const ensureArray = (value) => {
+      if (Array.isArray(value)) return value
+      if (typeof value === 'string' && value.trim()) {
+        try {
+          return JSON.parse(value)
+        } catch {
+          return []
+        }
       }
-      
-      // Use your UserContext updateResumeData function
-      await updateResumeData(null, updatedData)
-      
-      setIsEditingProfile(false)
-      setProfileSuccess('Profile updated successfully!')
-      
-      // Clear success message after 3 seconds
-      setTimeout(() => setProfileSuccess(''), 3000)
-    } catch (error) {
-      console.error('Error updating profile:', error)
-      setProfileError('Failed to update profile. Please try again.')
-    } finally {
-      setProfileLoading(false)
+      return []
     }
+
+    const updatedData = {
+      name: profileForm.name,
+      location_preference: profileForm.location,
+      experience_level: profileForm.experience_level,
+      education: profileForm.education,
+      summary: profileForm.summary,
+      phone: profileForm.phone,
+      skills: ensureArray(profileForm.skills),
+      // Fix: Ensure these are always arrays
+      work_experience: ensureArray(userProfile?.work_experience),
+      projects: ensureArray(userProfile?.projects),
+      certifications: ensureArray(userProfile?.certifications),
+      languages: ensureArray(userProfile?.languages),
+      // Preserve other existing data
+      originalFileName: userProfile?.originalFileName || null,
+      resumeUploadedAt: userProfile?.resumeUploadedAt || null,
+      resumeVersion: userProfile?.resumeVersion || 1,
+      skillsCount: Array.isArray(profileForm.skills) ? profileForm.skills.length : 0,
+      projectsCount: userProfile?.projectsCount || 0,
+      completenessScore: userProfile?.completenessScore || 0,
+      totalExperience: userProfile?.totalExperience || 0
+    }
+    
+    await updateResumeData(null, updatedData)
+    
+    setIsEditingProfile(false)
+    setProfileSuccess('Profile updated successfully!')
+    setTimeout(() => setProfileSuccess(''), 3000)
+  } catch (error) {
+    console.error('Error updating profile:', error)
+    setProfileError('Failed to update profile. Please try again.')
+  } finally {
+    setProfileLoading(false)
   }
+}
 
   const handleAddSkill = () => {
     const trimmedSkill = newSkill.trim()
@@ -192,42 +211,41 @@ function Settings() {
       return
     }
 
-    if (passwordForm.newPassword.length < 6) {
-      setPasswordError('Password must be at least 6 characters long')
+    if (passwordForm.newPassword.length < 8) {
+      setPasswordError('Password must be at least 8 characters long')
       return
     }
 
     setPasswordLoading(true)
     setPasswordError('')
+    setPasswordSuccess('')
 
     try {
-      // Note: You'll need to implement password change in your UserContext
-      // For now, this is a placeholder
-      const response = await fetch('http://127.0.0.1:5000/api/change-password', {
-        method: 'POST',
-        headers: { 
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${current?.$id}` // Adjust based on your auth setup
-        },
-        body: JSON.stringify({
-          currentPassword: passwordForm.currentPassword,
-          newPassword: passwordForm.newPassword
-        })
-      })
-
-      if (!response.ok) {
-        throw new Error('Failed to change password')
-      }
+      // Use Appwrite's updatePassword method
+      await account.updatePassword(
+        passwordForm.newPassword,
+        passwordForm.currentPassword
+      )
       
-      alert('Password changed successfully!')
+      setPasswordSuccess('Password changed successfully!')
       setPasswordForm({
         currentPassword: '',
         newPassword: '',
         confirmPassword: ''
       })
       setIsChangingPassword(false)
-    } catch {
-      setPasswordError('Failed to change password. Please try again.')
+      
+      // Clear success message after 3 seconds
+      setTimeout(() => setPasswordSuccess(''), 3000)
+    } catch (error) {
+      console.error('Password change error:', error)
+      if (error.message.includes('Invalid credentials')) {
+        setPasswordError('Current password is incorrect')
+      } else if (error.message.includes('Password must be')) {
+        setPasswordError('Password must be at least 8 characters long')
+      } else {
+        setPasswordError('Failed to change password. Please try again.')
+      }
     } finally {
       setPasswordLoading(false)
     }
@@ -236,23 +254,35 @@ function Settings() {
   const handleDeleteResume = async () => {
     if (window.confirm('Are you sure you want to delete your resume data? This action cannot be undone.')) {
       try {
-        // You might want to add a clearResumeData function to your UserContext
-        // For now, this would be a custom implementation
-        const response = await fetch('http://127.0.0.1:5000/api/delete-resume', {
-          method: 'DELETE',
-          headers: {
-            'Authorization': `Bearer ${current?.$id}`
-          }
-        })
-
-        if (response.ok) {
-          alert('Resume data deleted successfully!')
-          // Reload user profile
-          window.location.reload()
-        } else {
-          throw new Error('Failed to delete resume')
+        // Create empty data to clear resume information
+        const emptyData = {
+          name: '',
+          location_preference: '',
+          experience_level: 'entry',
+          education: '',
+          summary: '',
+          phone: '',
+          skills: [],
+          work_experience: [],
+          projects: [],
+          certifications: [],
+          languages: [],
+          originalFileName: null,
+          resumeUploadedAt: null,
+          resumeVersion: 1,
+          skillsCount: 0,
+          projectsCount: 0,
+          completenessScore: 0,
+          totalExperience: 0
         }
-      } catch {
+
+        await updateResumeData(null, emptyData)
+        alert('Resume data deleted successfully!')
+        
+        // Reload the page to reflect changes
+        window.location.reload()
+      } catch (error) {
+        console.error('Error deleting resume:', error)
         alert('Failed to delete resume data. Please try again.')
       }
     }
@@ -305,7 +335,7 @@ function Settings() {
         </div>
 
         {/* Success/Error Messages */}
-        {profileSuccess && (
+        {(profileSuccess || passwordSuccess) && (
           <motion.div
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -313,12 +343,12 @@ function Settings() {
           >
             <div className="flex items-center">
               <FiCheckCircle className="mr-2 text-green-400" size={20} />
-              <p className="text-green-300">{profileSuccess}</p>
+              <p className="text-green-300">{profileSuccess || passwordSuccess}</p>
             </div>
           </motion.div>
         )}
 
-        {profileError && (
+        {(profileError || passwordError) && (
           <motion.div
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -326,7 +356,7 @@ function Settings() {
           >
             <div className="flex items-center">
               <FiAlertCircle className="mr-2 text-red-400" size={20} />
-              <p className="text-red-300">{profileError}</p>
+              <p className="text-red-300">{profileError || passwordError}</p>
             </div>
           </motion.div>
         )}
@@ -691,7 +721,7 @@ function Settings() {
                     <button
                       type="button"
                       onClick={() => setShowPasswords({ ...showPasswords, current: !showPasswords.current })}
-                      className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-white"
+                      className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-white transition-colors"
                     >
                       {showPasswords.current ? <FiEyeOff size={16} /> : <FiEye size={16} />}
                     </button>
@@ -711,7 +741,7 @@ function Settings() {
                     <button
                       type="button"
                       onClick={() => setShowPasswords({ ...showPasswords, new: !showPasswords.new })}
-                      className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-white"
+                      className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-white transition-colors"
                     >
                       {showPasswords.new ? <FiEyeOff size={16} /> : <FiEye size={16} />}
                     </button>
@@ -731,30 +761,21 @@ function Settings() {
                     <button
                       type="button"
                       onClick={() => setShowPasswords({ ...showPasswords, confirm: !showPasswords.confirm })}
-                      className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-white"
+                      className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-white transition-colors"
                     >
                       {showPasswords.confirm ? <FiEyeOff size={16} /> : <FiEye size={16} />}
                     </button>
                   </div>
                 </div>
 
-                {passwordError && (
-                  <div className="p-3 bg-red-900/20 border border-red-500/30 rounded-lg">
-                    <div className="flex items-center">
-                      <FiAlertCircle className="mr-2 text-red-400" size={16} />
-                      <p className="text-red-300 text-sm">{passwordError}</p>
-                    </div>
-                  </div>
-                )}
-
-                <div className="flex gap-3">
+                <div className="flex gap-3 pt-4">
                   <button
                     onClick={handlePasswordChange}
                     disabled={passwordLoading}
                     className="flex items-center px-6 py-2 bg-green-600 hover:bg-green-700 disabled:bg-green-800 text-white rounded-lg transition-colors"
                   >
                     {passwordLoading ? <FiLoader className="mr-2 animate-spin" size={16} /> : <FiSave className="mr-2" size={16} />}
-                    {passwordLoading ? 'Updating...' : 'Update Password'}
+                    {passwordLoading ? 'Changing...' : 'Change Password'}
                   </button>
                   <button
                     onClick={() => {
@@ -774,24 +795,64 @@ function Settings() {
                 </div>
               </div>
             ) : (
-              <div className="text-gray-400">
-                <p>Your password is secure. Click &quot;Change Password&quot; to update it.</p>
-                <p className="text-sm mt-2">Last password change: Unknown</p>
+              <div className="space-y-4">
+                <div className="flex items-center justify-between p-4 bg-gray-700/50 rounded-lg">
+                  <div>
+                    <p className="text-white font-medium">Password</p>
+                    <p className="text-gray-400 text-sm">••••••••••••</p>
+                  </div>
+                  <div className="flex items-center space-x-4">
+                    <div className={`flex items-center ${isVerified ? 'text-green-400' : 'text-yellow-400'}`}>
+                      {isVerified ? <FiCheckCircle size={16} /> : <FiAlertCircle size={16} />}
+                      <span className="ml-2 text-sm">
+                        {isVerified ? 'Email Verified' : 'Email Not Verified'}
+                      </span>
+                    </div>
+                  </div>
+                </div>
               </div>
             )}
           </motion.div>
 
-          {/* Account Statistics */}
+          {/* Account Actions */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.3 }}
+            className="bg-gray-800 rounded-xl shadow-lg p-6 border border-gray-700"
+          >
+            <div className="flex items-center mb-6">
+              <FiSettings className="mr-3 text-red-400" size={24} />
+              <h2 className="text-xl font-semibold text-white">Account Actions</h2>
+            </div>
+
+            <div className="space-y-4">
+              <div className="flex items-center justify-between p-4 bg-red-900/20 rounded-lg border border-red-500/30">
+                <div>
+                  <p className="text-red-300 font-medium">Sign Out</p>
+                  <p className="text-red-200 text-sm">Sign out from your account</p>
+                </div>
+                <button
+                  onClick={handleLogout}
+                  className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors"
+                >
+                  Sign Out
+                </button>
+              </div>
+            </div>
+          </motion.div>
+
+          {/* User Stats - if available */}
           {userStats && (
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.3 }}
+              transition={{ delay: 0.4 }}
               className="bg-gray-800 rounded-xl shadow-lg p-6 border border-gray-700"
             >
               <div className="flex items-center mb-6">
-                <FiBriefcase className="mr-3 text-purple-400" size={24} />
-                <h2 className="text-xl font-semibold text-white">Account Statistics</h2>
+                <FiUser className="mr-3 text-purple-400" size={24} />
+                <h2 className="text-xl font-semibold text-white">Profile Statistics</h2>
               </div>
 
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -804,105 +865,16 @@ function Settings() {
                   <div className="text-sm text-gray-400">Projects</div>
                 </div>
                 <div className="text-center p-4 bg-gray-700/50 rounded-lg">
-                  <div className="text-2xl font-bold text-yellow-400">{userStats.totalExperience}</div>
-                  <div className="text-sm text-gray-400">Experience</div>
-                </div>
-                <div className="text-center p-4 bg-gray-700/50 rounded-lg">
                   <div className="text-2xl font-bold text-purple-400">{userStats.completenessScore}%</div>
                   <div className="text-sm text-gray-400">Complete</div>
                 </div>
-              </div>
-
-              {userProfile?.resumeUploadedAt && (
-                <div className="mt-4 pt-4 border-t border-gray-700">
-                  <p className="text-sm text-gray-400">
-                    Profile last updated: {new Date(userProfile.resumeUploadedAt).toLocaleDateString()}
-                  </p>
+                <div className="text-center p-4 bg-gray-700/50 rounded-lg">
+                  <div className="text-2xl font-bold text-yellow-400 capitalize">{userStats.experienceLevel}</div>
+                  <div className="text-sm text-gray-400">Level</div>
                 </div>
-              )}
+              </div>
             </motion.div>
           )}
-
-          {/* Account Actions */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.4 }}
-            className="bg-gray-800 rounded-xl shadow-lg p-6 border border-gray-700"
-          >
-            <div className="flex items-center mb-6">
-              <FiSettings className="mr-3 text-red-400" size={24} />
-              <h2 className="text-xl font-semibold text-white">Account Actions</h2>
-            </div>
-
-            <div className="space-y-4">
-              {/* Email Verification Status */}
-              <div className="flex items-center justify-between p-4 bg-gray-700/30 rounded-lg">
-                <div className="flex items-center">
-                  <div className={`w-3 h-3 rounded-full mr-3 ${isVerified ? 'bg-green-400' : 'bg-yellow-400'}`}></div>
-                  <div>
-                    <p className="text-white font-medium">Email Verification</p>
-                    <p className="text-sm text-gray-400">
-                      {isVerified ? 'Your email is verified' : 'Please verify your email address'}
-                    </p>
-                  </div>
-                </div>
-                {!isVerified && (
-                  <button
-                    onClick={async () => {
-                      try {
-                        const url = window.location.origin + '/verify-email';
-                        await account.createVerification(url);
-                        alert('Verification email sent!');
-                      } catch {
-                        alert('Failed to send verification email');
-                      }
-                    }}
-                    className="px-4 py-2 bg-yellow-600 hover:bg-yellow-700 text-white rounded-lg transition-colors"
-                  >
-                    Resend
-                  </button>
-                )}
-              </div>
-
-              {/* Export Data */}
-              <div className="flex items-center justify-between p-4 bg-gray-700/30 rounded-lg">
-                <div>
-                  <p className="text-white font-medium">Export Your Data</p>
-                  <p className="text-sm text-gray-400">Download a copy of your profile data</p>
-                </div>
-                <button
-                  onClick={() => {
-                    const dataStr = JSON.stringify(userProfile, null, 2);
-                    const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);
-                    const exportFileDefaultName = 'my-profile-data.json';
-                    
-                    const linkElement = document.createElement('a');
-                    linkElement.setAttribute('href', dataUri);
-                    linkElement.setAttribute('download', exportFileDefaultName);
-                    linkElement.click();
-                  }}
-                  className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
-                >
-                  Export
-                </button>
-              </div>
-
-              {/* Logout */}
-              <div className="flex items-center justify-between p-4 bg-red-900/20 border border-red-500/30 rounded-lg">
-                <div>
-                  <p className="text-white font-medium">Sign Out</p>
-                  <p className="text-sm text-gray-400">Sign out of your account</p>
-                </div>
-                <button
-                  onClick={handleLogout}
-                  className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors"
-                >
-                  Sign Out
-                </button>
-              </div>
-            </div>
-          </motion.div>
         </div>
       </div>
     </div>

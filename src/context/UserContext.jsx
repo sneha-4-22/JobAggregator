@@ -1,4 +1,4 @@
-// Updated UserContext.jsx with data truncation and optimization
+// Updated UserContext.jsx with fixed certifications array handling
 
 import { ID, Query } from "appwrite";
 import { createContext, useContext, useEffect, useState } from "react";
@@ -62,6 +62,40 @@ export function UserProvider({ children }) {
       .filter(skill => skill && skill.length > 0);
   }
 
+  // New function to handle certifications array properly
+  function extractCertifications(certifications, maxCertifications = 15) {
+    if (!certifications) return [];
+    
+    if (Array.isArray(certifications)) {
+      return certifications
+        .slice(0, maxCertifications)
+        .map(cert => {
+          if (typeof cert === 'string') {
+            return cert;
+          } else if (typeof cert === 'object' && cert !== null) {
+            return cert.name || cert.title || cert.certification || String(cert);
+          }
+          return String(cert);
+        })
+        .filter(cert => cert && cert.length > 0);
+    }
+    
+    if (typeof certifications === 'string') {
+      // Try to parse if it's a JSON string
+      try {
+        const parsed = JSON.parse(certifications);
+        if (Array.isArray(parsed)) {
+          return extractCertifications(parsed, maxCertifications);
+        }
+      } catch (e) {
+        // If not JSON, treat as single certification
+        return [certifications];
+      }
+    }
+    
+    return [];
+  }
+
   // Process resume with Flask API
   async function processResumeWithAPI(resumeFile) {
     try {
@@ -115,7 +149,7 @@ export function UserProvider({ children }) {
         skills: extractKeySkills(resumeData?.skills),
         work_experience: optimizeDataForStorage(resumeData?.work_experience, 7000), // Reduced limit for work experience
         projects: optimizeDataForStorage(resumeData?.projects, 2000),
-        certifications: resumeData?.certifications || [],
+        certifications: extractCertifications(resumeData?.certifications), // Fixed: Keep as array
         languages: (resumeData?.languages || []).slice(0, 10),
         
         // Computed fields
@@ -326,6 +360,19 @@ export function UserProvider({ children }) {
           }
         }
         
+        // Ensure certifications is always an array
+        if (userDoc.certifications && !Array.isArray(userDoc.certifications)) {
+          if (typeof userDoc.certifications === 'string') {
+            try {
+              userDoc.certifications = JSON.parse(userDoc.certifications);
+            } catch (e) {
+              userDoc.certifications = [userDoc.certifications];
+            }
+          } else {
+            userDoc.certifications = [];
+          }
+        }
+        
         setUserProfile(userDoc);
         setHasResume(userDoc.hasResume || false);
         console.log("User profile loaded from database");
@@ -425,8 +472,8 @@ export function UserProvider({ children }) {
             skills: extractKeySkills(resumeAnalysis.skills),
             work_experience: optimizeDataForStorage(resumeAnalysis.work_experience, 7000),
             projects: optimizeDataForStorage(resumeAnalysis.projects, 2000),
-            certifications: optimizeDataForStorage(resumeAnalysis.certifications, 1500),
-            languages: JSON.stringify((resumeAnalysis.languages || []).slice(0, 10)),
+            certifications: extractCertifications(resumeAnalysis.certifications), // Fixed: Keep as array
+            languages: (resumeAnalysis.languages || []).slice(0, 10),
             
             // Update computed fields
             profileCompleteness: calculateProfileCompleteness(resumeAnalysis),
