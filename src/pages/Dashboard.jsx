@@ -12,8 +12,8 @@ function Dashboard() {
     jobType: 'internship',
     location: 'all'
   })
+  const [profileExpanded, setProfileExpanded] = useState(false)
 
-  // Updated to use the new UserContext structure
   const { 
     current: user, 
     hasResume, 
@@ -22,13 +22,10 @@ function Dashboard() {
     getUserStats
   } = useUser()
 
-  // Configure API base URL - change this to match your Flask server
   const API_BASE_URL = 'http://127.0.0.1:5000'
 
-  // Get dashboard data from context
   const userStats = getUserStats()
 
-  // Load initial jobs
   useEffect(() => {
     if (hasResume && userProfile) {
       fetchPersonalizedJobs()
@@ -261,7 +258,6 @@ function Dashboard() {
           </div>
         )}
 
-        {/* Resume Upload Section - Only show if user doesn't have resume */}
         {!hasResume && (
           <div className="mb-8 bg-gray-800 rounded-xl shadow-lg p-6 border-2 border-dashed border-blue-500/50 hover:border-blue-400 transition-colors">
             <div className="text-center">
@@ -289,195 +285,195 @@ function Dashboard() {
           </div>
         )}
 
-        {/* User Profile Section - Show if user has resume */}
-        {hasResume && userProfile && (
-          <div className="mb-8 bg-gray-800 rounded-xl shadow-lg p-6 border border-gray-700">
-            <div className="flex items-center justify-between mb-4">
-              <div className="flex items-center">
-                <FiUser className="mr-2 text-blue-400" />
-                <h3 className="text-lg font-semibold text-white">Your Profile</h3>
-              </div>
-              <div className="flex items-center space-x-2">
-                <button 
-                  onClick={() => window.location.href = '/settings'}
-                  className="flex items-center text-sm text-gray-400 hover:text-blue-400 transition-colors"
-                >
-                  <FiEdit className="mr-1" />
-                  Edit Profile
-                </button>
-              </div>
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-              <div>
-                <p className="text-sm text-gray-400">Name</p>
-                <p className="font-medium text-white">{userProfile.name || 'Not specified'}</p>
-              </div>
-              <div>
-                <p className="text-sm text-gray-400">Experience Level</p>
-                <p className="font-medium capitalize text-white">{userProfile.experience_level || 'Entry'}</p>
-              </div>
-              <div>
-                <p className="text-sm text-gray-400">Education</p>
-                <p className="font-medium text-white">{userProfile.education || 'Not specified'}</p>
-              </div>
-              <div>
-                <p className="text-sm text-gray-400">Location Preference</p>
-                <p className="font-medium text-white">{userProfile.location || 'Flexible'}</p>
-              </div>
-            </div>
-            {userProfile.skills && userProfile.skills.length > 0 && (
-              <div className="mt-4">
-                <p className="text-sm text-gray-400 mb-2">Skills ({userProfile.skills.length})</p>
-                <div className="flex flex-wrap gap-2">
-                  {userProfile.skills.slice(0, 12).map((skill, index) => (
-                    <span key={index} className="bg-blue-900/50 text-blue-200 px-3 py-1 rounded-md text-sm border border-blue-500/30">
-                      {skill}
-                    </span>
-                  ))}
-                  {userProfile.skills.length > 12 && (
-                    <span className="text-gray-400 text-sm px-3 py-1">
-                      +{userProfile.skills.length - 12} more
-                    </span>
-                  )}
-                </div>
-              </div>
-            )}
-           {/* Debug: Let's check what's in userProfile.projects */}
-            {console.log('userProfile.projects:', userProfile.projects)}
-            {userProfile.projects && Array.isArray(userProfile.projects) && userProfile.projects.length > 0 && (
-              <div className="mt-6">
-                <div className="flex items-center mb-3">
-                  <span className="text-sm text-gray-400">Projects ({userProfile.projects.length})</span>
-                </div>
-                <div className="space-y-3">
-                  {userProfile.projects.slice(0, 3).map((project, index) => (
-                    <div key={index} className="bg-gray-700/30 border border-gray-600 rounded-lg p-4">
-                      <h4 className="font-medium text-white text-sm">{project.name || project.title || 'Untitled Project'}</h4>
-                      <p className="text-gray-300 text-xs mt-1 leading-relaxed">
-                        {(project.description || project.summary) && (project.description || project.summary).length > 100 
-                          ? (project.description || project.summary).substring(0, 100) + '...' 
-                          : (project.description || project.summary || 'No description available')
-                        }
-                      </p>
-                      {(project.technologies || project.tech_stack || project.skills) && (project.technologies || project.tech_stack || project.skills).length > 0 && (
-                        <div className="flex flex-wrap gap-1 mt-2">
-                          {(project.technologies || project.tech_stack || project.skills).slice(0, 5).map((tech, techIndex) => (
-                            <span key={techIndex} className="bg-blue-900/50 text-blue-200 px-2 py-1 rounded text-xs border border-blue-500/30">
-                              {tech}
-                            </span>
-                          ))}
-                          {(project.technologies || project.tech_stack || project.skills).length > 5 && (
-                            <span className="bg-gray-600 text-gray-300 px-2 py-1 rounded text-xs">
-                              +{(project.technologies || project.tech_stack || project.skills).length - 5}
-                            </span>
-                          )}
-                        </div>
-                      )}
-                      {(project.duration || project.timeline || project.date) && (
-                        <p className="text-gray-400 text-xs mt-2">{project.duration || project.timeline || project.date}</p>
-                      )}
-                    </div>
-                  ))}
-                  {userProfile.projects.length > 3 && (
-                    <div className="text-center">
-                      <span className="bg-gray-700 text-gray-300 px-3 py-1 rounded-md text-xs">
-                        +{userProfile.projects.length - 3} more projects
-                      </span>
-                    </div>
-                  )}
-                </div>
-              </div>
-            )}
-            {/* Fallback: Show projects even if they're not in the expected format */}
-            {/* Parse projects from string format */}
-            {(() => {
-              let projectsArray = [];
-              if (userProfile.projects && typeof userProfile.projects === 'string') {
-                try {
-                  // Split by pipe separator and parse each project
-                  const projectStrings = userProfile.projects.split(' | ');
-                  projectsArray = projectStrings.map(projectStr => {
-                    // Parse the JSON-like string for each project
-                    const match = projectStr.match(/\{(.+)\}/);
-                    if (match) {
-                      try {
-                        return JSON.parse('{' + match[1] + '}');
-                      } catch (e) {
-                        console.error('Error parsing project:', e);
-                        return null;
-                      }
-                    }
-                    return null;
-                  }).filter(project => project !== null);
-                } catch (e) {
-                  console.error('Error parsing projects string:', e);
-                }
-              } else if (Array.isArray(userProfile.projects)) {
-                projectsArray = userProfile.projects;
-              }
+{hasResume && userProfile && (
+  <div className="mb-8 bg-gray-800 rounded-xl shadow-lg p-6 border border-gray-700">
+    <div className="flex items-center justify-between mb-4">
+      <div className="flex items-center">
+        <FiUser className="mr-2 text-blue-400" />
+        <h3 className="text-lg font-semibold text-white">Your Profile</h3>
+      </div>
+      <div className="flex items-center space-x-4">
+        {/* Collapsible toggle button */}
+        <button 
+          onClick={() => setProfileExpanded(!profileExpanded)}
+          className="flex items-center text-sm text-gray-400 hover:text-blue-400 transition-colors"
+        >
+          {profileExpanded ? 'Show Less' : 'Show More'}
+        </button>
+        <button 
+          onClick={() => window.location.href = '/profile'}
+          className="flex items-center text-sm text-gray-400 hover:text-blue-400 transition-colors"
+        >
+          <FiEdit className="mr-1" />
+          Edit Profile
+        </button>
+      </div>
+    </div>
 
-              return projectsArray.length > 0 ? (
-                <div className="mt-6">
-                  <div className="flex items-center mb-3">
-                    <span className="text-sm text-gray-400">Projects ({projectsArray.length})</span>
-                  </div>
-                  <div className="space-y-3">
-                    {projectsArray.slice(0, 3).map((project, index) => (
-                      <div key={index} className="bg-gray-700/30 border border-gray-600 rounded-lg p-4">
-                        <h4 className="font-medium text-white text-sm">{project.name || 'Untitled Project'}</h4>
-                        <p className="text-gray-300 text-xs mt-1 leading-relaxed">
-                          {project.description && project.description.length > 100 
-                            ? project.description.substring(0, 100) + '...' 
-                            : project.description || 'No description available'
-                          }
-                        </p>
-                        {project.technologies && Array.isArray(project.technologies) && project.technologies.length > 0 && (
-                          <div className="flex flex-wrap gap-1 mt-2">
-                            {project.technologies.slice(0, 5).map((tech, techIndex) => (
-                              <span key={techIndex} className="bg-blue-900/50 text-blue-200 px-2 py-1 rounded text-xs border border-blue-500/30">
-                                {tech}
-                              </span>
-                            ))}
-                            {project.technologies.length > 5 && (
-                              <span className="bg-gray-600 text-gray-300 px-2 py-1 rounded text-xs">
-                                +{project.technologies.length - 5}
-                              </span>
-                            )}
-                          </div>
-                        )}
-                        {project.duration && (
-                          <p className="text-gray-400 text-xs mt-2">{project.duration}</p>
-                        )}
-                      </div>
-                    ))}
-                    {projectsArray.length > 3 && (
-                      <div className="text-center">
-                        <span className="bg-gray-700 text-gray-300 px-3 py-1 rounded-md text-xs">
-                          +{projectsArray.length - 3} more projects
-                        </span>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              ) : null;
-            })()}
-            {userProfile.summary && (
-              <div className="mt-4">
-                <p className="text-sm text-gray-400 mb-2">Professional Summary</p>
-                <p className="text-gray-300 text-sm leading-relaxed">{userProfile.summary}</p>
-              </div>
-            )}
-            <div className="mt-4 flex items-center justify-between text-sm text-gray-400">
-              <div>
-                Resume: {userProfile.originalFileName || 'Uploaded'}
-              </div>
-              <div>
-                Last updated: {userProfile.resumeUploadedAt ? new Date(userProfile.resumeUploadedAt).toLocaleDateString() : 'Unknown'}
-              </div>
+    {/* Compact Profile Summary - Always Visible */}
+    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
+      <div className="text-center p-3 bg-gray-700/30 rounded-lg">
+        <div className="text-xl font-bold text-white">{userProfile.skills?.length || 0}</div>
+        <div className="text-xs text-gray-400">Skills</div>
+      </div>
+      <div className="text-center p-3 bg-gray-700/30 rounded-lg">
+        <div className="text-xl font-bold text-white">{userStats?.workExperienceCount || 0}</div>
+        <div className="text-xs text-gray-400">Experience</div>
+      </div>
+      <div className="text-center p-3 bg-gray-700/30 rounded-lg">
+        <div className="text-xl font-bold text-white">{userStats?.projectsCount || 0}</div>
+        <div className="text-xs text-gray-400">Projects</div>
+      </div>
+      <div className="text-center p-3 bg-gray-700/30 rounded-lg">
+        <div className="text-xl font-bold text-white">{userProfile.completenessScore || 0}%</div>
+        <div className="text-xs text-gray-400">Complete</div>
+      </div>
+    </div>
+
+    {/* Top Skills Preview - Always Visible */}
+    {userProfile.skills && userProfile.skills.length > 0 && (
+      <div className="mb-4">
+        <div className="flex items-center justify-between mb-2">
+          <span className="text-sm text-gray-400">Top Skills</span>
+          <span className="text-xs text-gray-500">{userProfile.skills.length} total</span>
+        </div>
+        <div className="flex flex-wrap gap-2">
+          {userProfile.skills.slice(0, 6).map((skill, index) => (
+            <span key={index} className="bg-blue-900/50 text-blue-200 px-2 py-1 rounded text-sm border border-blue-500/30">
+              {skill}
+            </span>
+          ))}
+          {userProfile.skills.length > 6 && (
+            <span className="text-gray-400 text-sm px-2 py-1">
+              +{userProfile.skills.length - 6} more
+            </span>
+          )}
+        </div>
+      </div>
+    )}
+
+    {/* Expandable Details Section */}
+    {profileExpanded && (
+      <div className="border-t border-gray-600 pt-4 space-y-4 animate-fadeIn">
+        {/* Basic Info Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div>
+            <p className="text-xs text-gray-400">Name</p>
+            <p className="font-medium text-white text-sm">{userProfile.name || 'Not specified'}</p>
+          </div>
+          <div>
+            <p className="text-xs text-gray-400">Experience Level</p>
+            <p className="font-medium capitalize text-white text-sm">{userProfile.experience_level || 'Entry'}</p>
+          </div>
+          <div>
+            <p className="text-xs text-gray-400">Location</p>
+            <p className="font-medium text-white text-sm">{userProfile.location || 'Flexible'}</p>
+          </div>
+        </div>
+
+        {/* All Skills */}
+        {userProfile.skills && userProfile.skills.length > 6 && (
+          <div>
+            <p className="text-sm text-gray-400 mb-2">All Skills</p>
+            <div className="flex flex-wrap gap-2">
+              {userProfile.skills.map((skill, index) => (
+                <span key={index} className="bg-blue-900/50 text-blue-200 px-2 py-1 rounded text-sm border border-blue-500/30">
+                  {skill}
+                </span>
+              ))}
             </div>
           </div>
         )}
 
+        {/* Projects Section - Compact Horizontal Cards */}
+        {(() => {
+          let projectsArray = [];
+          if (userProfile.projects && typeof userProfile.projects === 'string') {
+            try {
+              const projectStrings = userProfile.projects.split(' | ');
+              projectsArray = projectStrings.map(projectStr => {
+                const match = projectStr.match(/\{(.+)\}/);
+                if (match) {
+                  try {
+                    return JSON.parse('{' + match[1] + '}');
+                  } catch {
+                    return null;
+                  }
+                }
+                return null;
+              }).filter(project => project !== null);
+            } catch (e) {
+              console.error('Error parsing projects string:', e);
+            }
+          } else if (Array.isArray(userProfile.projects)) {
+            projectsArray = userProfile.projects;
+          }
+
+          return projectsArray.length > 0 ? (
+            <div>
+              <p className="text-sm text-gray-400 mb-3">Recent Projects</p>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                {projectsArray.slice(0, 4).map((project, index) => (
+                  <div key={index} className="bg-gray-700/30 border border-gray-600 rounded-lg p-3">
+                    <h4 className="font-medium text-white text-sm mb-1">{project.name || 'Untitled Project'}</h4>
+                    <p className="text-gray-300 text-xs mb-2 line-clamp-2">
+                      {project.description && project.description.length > 80 
+                        ? project.description.substring(0, 80) + '...' 
+                        : project.description || 'No description available'
+                      }
+                    </p>
+                    {project.technologies && Array.isArray(project.technologies) && project.technologies.length > 0 && (
+                      <div className="flex flex-wrap gap-1">
+                        {project.technologies.slice(0, 3).map((tech, techIndex) => (
+                          <span key={techIndex} className="bg-blue-900/50 text-blue-200 px-1.5 py-0.5 rounded text-xs border border-blue-500/30">
+                            {tech}
+                          </span>
+                        ))}
+                        {project.technologies.length > 3 && (
+                          <span className="text-gray-400 text-xs">+{project.technologies.length - 3}</span>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+              {projectsArray.length > 4 && (
+                <div className="text-center mt-2">
+                  <span className="text-gray-400 text-xs">
+                    +{projectsArray.length - 4} more projects in full profile
+                  </span>
+                </div>
+              )}
+            </div>
+          ) : null;
+        })()}
+
+        {/* Professional Summary - Truncated */}
+        {userProfile.summary && (
+          <div>
+            <p className="text-sm text-gray-400 mb-2">Professional Summary</p>
+            <p className="text-gray-300 text-sm leading-relaxed">
+              {userProfile.summary.length > 150 
+                ? userProfile.summary.substring(0, 150) + '...' 
+                : userProfile.summary
+              }
+            </p>
+          </div>
+        )}
+
+        {/* Resume Info */}
+        <div className="flex items-center justify-between text-xs text-gray-500 pt-2 border-t border-gray-700">
+          <div>
+            Resume: {userProfile.originalFileName || 'Uploaded'}
+          </div>
+          <div>
+            Updated: {userProfile.resumeUploadedAt ? new Date(userProfile.resumeUploadedAt).toLocaleDateString() : 'Unknown'}
+          </div>
+        </div>
+      </div>
+    )}
+  </div>
+)}
         {/* Search and Filters */}
         <div className="mb-8 bg-gray-800 rounded-xl shadow-lg p-4 border border-gray-700">
           <div className="flex flex-col md:flex-row md:items-center gap-4">
