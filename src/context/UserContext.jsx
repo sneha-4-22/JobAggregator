@@ -5,7 +5,7 @@ import { createContext, useContext, useEffect, useState } from "react";
 import { account, databases } from "../appwrite";
 
 // Appwrite configuration
-const DATABASE_ID = "67f6882400389383a21a";
+const DATABASE_ID = "gigrithm";
 const USERS_COLLECTION_ID = "users";
 
 const UserContext = createContext();
