@@ -342,6 +342,125 @@ function Dashboard() {
                 </div>
               </div>
             )}
+           {/* Debug: Let's check what's in userProfile.projects */}
+            {console.log('userProfile.projects:', userProfile.projects)}
+            {userProfile.projects && Array.isArray(userProfile.projects) && userProfile.projects.length > 0 && (
+              <div className="mt-6">
+                <div className="flex items-center mb-3">
+                  <span className="text-sm text-gray-400">Projects ({userProfile.projects.length})</span>
+                </div>
+                <div className="space-y-3">
+                  {userProfile.projects.slice(0, 3).map((project, index) => (
+                    <div key={index} className="bg-gray-700/30 border border-gray-600 rounded-lg p-4">
+                      <h4 className="font-medium text-white text-sm">{project.name || project.title || 'Untitled Project'}</h4>
+                      <p className="text-gray-300 text-xs mt-1 leading-relaxed">
+                        {(project.description || project.summary) && (project.description || project.summary).length > 100 
+                          ? (project.description || project.summary).substring(0, 100) + '...' 
+                          : (project.description || project.summary || 'No description available')
+                        }
+                      </p>
+                      {(project.technologies || project.tech_stack || project.skills) && (project.technologies || project.tech_stack || project.skills).length > 0 && (
+                        <div className="flex flex-wrap gap-1 mt-2">
+                          {(project.technologies || project.tech_stack || project.skills).slice(0, 5).map((tech, techIndex) => (
+                            <span key={techIndex} className="bg-blue-900/50 text-blue-200 px-2 py-1 rounded text-xs border border-blue-500/30">
+                              {tech}
+                            </span>
+                          ))}
+                          {(project.technologies || project.tech_stack || project.skills).length > 5 && (
+                            <span className="bg-gray-600 text-gray-300 px-2 py-1 rounded text-xs">
+                              +{(project.technologies || project.tech_stack || project.skills).length - 5}
+                            </span>
+                          )}
+                        </div>
+                      )}
+                      {(project.duration || project.timeline || project.date) && (
+                        <p className="text-gray-400 text-xs mt-2">{project.duration || project.timeline || project.date}</p>
+                      )}
+                    </div>
+                  ))}
+                  {userProfile.projects.length > 3 && (
+                    <div className="text-center">
+                      <span className="bg-gray-700 text-gray-300 px-3 py-1 rounded-md text-xs">
+                        +{userProfile.projects.length - 3} more projects
+                      </span>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+            {/* Fallback: Show projects even if they're not in the expected format */}
+            {/* Parse projects from string format */}
+            {(() => {
+              let projectsArray = [];
+              if (userProfile.projects && typeof userProfile.projects === 'string') {
+                try {
+                  // Split by pipe separator and parse each project
+                  const projectStrings = userProfile.projects.split(' | ');
+                  projectsArray = projectStrings.map(projectStr => {
+                    // Parse the JSON-like string for each project
+                    const match = projectStr.match(/\{(.+)\}/);
+                    if (match) {
+                      try {
+                        return JSON.parse('{' + match[1] + '}');
+                      } catch (e) {
+                        console.error('Error parsing project:', e);
+                        return null;
+                      }
+                    }
+                    return null;
+                  }).filter(project => project !== null);
+                } catch (e) {
+                  console.error('Error parsing projects string:', e);
+                }
+              } else if (Array.isArray(userProfile.projects)) {
+                projectsArray = userProfile.projects;
+              }
+
+              return projectsArray.length > 0 ? (
+                <div className="mt-6">
+                  <div className="flex items-center mb-3">
+                    <span className="text-sm text-gray-400">Projects ({projectsArray.length})</span>
+                  </div>
+                  <div className="space-y-3">
+                    {projectsArray.slice(0, 3).map((project, index) => (
+                      <div key={index} className="bg-gray-700/30 border border-gray-600 rounded-lg p-4">
+                        <h4 className="font-medium text-white text-sm">{project.name || 'Untitled Project'}</h4>
+                        <p className="text-gray-300 text-xs mt-1 leading-relaxed">
+                          {project.description && project.description.length > 100 
+                            ? project.description.substring(0, 100) + '...' 
+                            : project.description || 'No description available'
+                          }
+                        </p>
+                        {project.technologies && Array.isArray(project.technologies) && project.technologies.length > 0 && (
+                          <div className="flex flex-wrap gap-1 mt-2">
+                            {project.technologies.slice(0, 5).map((tech, techIndex) => (
+                              <span key={techIndex} className="bg-blue-900/50 text-blue-200 px-2 py-1 rounded text-xs border border-blue-500/30">
+                                {tech}
+                              </span>
+                            ))}
+                            {project.technologies.length > 5 && (
+                              <span className="bg-gray-600 text-gray-300 px-2 py-1 rounded text-xs">
+                                +{project.technologies.length - 5}
+                              </span>
+                            )}
+                          </div>
+                        )}
+                        {project.duration && (
+                          <p className="text-gray-400 text-xs mt-2">{project.duration}</p>
+                        )}
+                      </div>
+                    ))}
+                    {projectsArray.length > 3 && (
+                      <div className="text-center">
+                        <span className="bg-gray-700 text-gray-300 px-3 py-1 rounded-md text-xs">
+                          +{projectsArray.length - 3} more projects
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              ) : null;
+            })()}
             {userProfile.summary && (
               <div className="mt-4">
                 <p className="text-sm text-gray-400 mb-2">Professional Summary</p>
