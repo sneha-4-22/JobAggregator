@@ -43,7 +43,8 @@ function Settings() {
     education: '',
     summary: '',
     phone: '',
-    skills: []
+    skills: [],
+    projects: []
   })
 
   // Resume states
@@ -69,39 +70,81 @@ function Settings() {
 
   // New skill input
   const [newSkill, setNewSkill] = useState('')
+  const [newProject, setNewProject] = useState({
+  name: '',
+  description: '',
+  technologies: '',
+  duration: ''
+})
   const [profileLoading, setProfileLoading] = useState(false)
   const [profileError, setProfileError] = useState('')
   const [profileSuccess, setProfileSuccess] = useState('')
   const isVerified = current?.emailVerification || false
 
   // Initialize profile form with current userProfile data
-  useEffect(() => {
-    if (userProfile) {
-      // Parse skills if they're stored as JSON string
-      let skillsArray = []
-      if (userProfile.skills) {
-        if (Array.isArray(userProfile.skills)) {
-          skillsArray = userProfile.skills
-        } else if (typeof userProfile.skills === 'string') {
-          try {
-            skillsArray = JSON.parse(userProfile.skills)
-          } catch {
-            skillsArray = []
-          }
+  // Complete useEffect replacement - put this in your component:
+
+useEffect(() => {
+  if (userProfile) {
+    // Parse skills if they're stored as JSON string
+    let skillsArray = []
+    if (userProfile.skills) {
+      if (Array.isArray(userProfile.skills)) {
+        skillsArray = userProfile.skills
+      } else if (typeof userProfile.skills === 'string') {
+        try {
+          skillsArray = JSON.parse(userProfile.skills)
+        } catch {
+          skillsArray = []
         }
       }
-
-      setProfileForm({
-        name: userProfile.name || '',
-        location: userProfile.location || '',
-        experience_level: userProfile.experience_level || 'entry',
-        education: userProfile.education || '',
-        summary: userProfile.summary || '',
-        phone: userProfile.phone || '',
-        skills: skillsArray
-      })
     }
-  }, [userProfile])
+
+    // Parse projects - handle pipe-separated JSON objects
+    let projectsArray = []
+    if (userProfile.projects && typeof userProfile.projects === 'string') {
+      try {
+        // Split by pipe separator and parse each JSON object
+        const projectStrings = userProfile.projects.split(' | ')
+        projectsArray = projectStrings.map(projectStr => {
+          try {
+            return JSON.parse(projectStr)
+          } catch {
+            // If JSON parsing fails, try manual parsing
+            const nameMatch = projectStr.match(/"name":"([^"]+)"/)
+            const descMatch = projectStr.match(/"description":"([^"]+)"/)
+            const durationMatch = projectStr.match(/"duration":"([^"]+)"/)
+            const techMatch = projectStr.match(/"technologies":\[([^\]]+)\]/)
+            
+            return {
+              name: nameMatch ? nameMatch[1] : '',
+              description: descMatch ? descMatch[1] : '',
+              duration: durationMatch ? durationMatch[1] : '',
+              technologies: techMatch ? 
+                techMatch[1].split(',').map(tech => tech.replace(/["\s]/g, '')) : []
+            }
+          }
+        })
+      } catch (error) {
+        console.error('Error parsing projects:', error)
+        projectsArray = []
+      }
+    } else if (Array.isArray(userProfile.projects)) {
+      projectsArray = userProfile.projects
+    }
+
+    setProfileForm({
+      name: userProfile.name || '',
+      location: userProfile.location || '',
+      experience_level: userProfile.experience_level || 'entry',
+      education: userProfile.education || '',
+      summary: userProfile.summary || '',
+      phone: userProfile.phone || '',
+      skills: skillsArray,
+      projects: projectsArray
+    })
+  }
+}, [userProfile])
 
   const handleProfileSave = async () => {
   setProfileLoading(true)
@@ -175,6 +218,35 @@ function Settings() {
       skills: profileForm.skills.filter(skill => skill !== skillToRemove)
     })
   }
+  const handleAddProject = () => {
+  if (newProject.name.trim() && newProject.description.trim()) {
+    const project = {
+      name: newProject.name.trim(),
+      description: newProject.description.trim(),
+      technologies: newProject.technologies.split(',').map(tech => tech.trim()).filter(tech => tech),
+      duration: newProject.duration.trim() || 'Not specified'
+    }
+    
+    setProfileForm({
+      ...profileForm,
+      projects: [...profileForm.projects, project]
+    })
+    
+    setNewProject({
+      name: '',
+      description: '',
+      technologies: '',
+      duration: ''
+    })
+  }
+}
+
+const handleRemoveProject = (projectIndex) => {
+  setProfileForm({
+    ...profileForm,
+    projects: profileForm.projects.filter((_, index) => index !== projectIndex)
+  })
+}
 
   const handleResumeUpload = async (event) => {
     const file = event.target.files[0]
@@ -498,7 +570,82 @@ function Settings() {
                       </button>
                     </div>
                   </div>
-
+                  {/* Projects */}
+<div>
+  <label className="block text-sm font-medium text-gray-300 mb-2">Projects</label>
+  <div className="space-y-3 mb-4">
+    {profileForm.projects.map((project, index) => (
+      <div key={index} className="bg-gray-700/50 border border-gray-600 rounded-lg p-4">
+        <div className="flex items-start justify-between">
+          <div className="flex-1">
+            <h4 className="font-medium text-white">{project.name}</h4>
+            <p className="text-gray-300 text-sm mt-1">{project.description}</p>
+            {project.technologies.length > 0 && (
+              <div className="flex flex-wrap gap-1 mt-2">
+                {project.technologies.map((tech, techIndex) => (
+                  <span key={techIndex} className="bg-blue-900/50 text-blue-200 px-2 py-1 rounded text-xs border border-blue-500/30">
+                    {tech}
+                  </span>
+                ))}
+              </div>
+            )}
+            <p className="text-gray-400 text-xs mt-2">{project.duration}</p>
+          </div>
+          <button
+            onClick={() => handleRemoveProject(index)}
+            className="ml-3 text-red-400 hover:text-red-300 transition-colors"
+          >
+            <FiTrash2 size={16} />
+          </button>
+        </div>
+      </div>
+    ))}
+  </div>
+  
+  <div className="space-y-3 p-4 bg-gray-700/30 rounded-lg border border-gray-600">
+    <div>
+      <input
+        type="text"
+        value={newProject.name}
+        onChange={(e) => setNewProject({...newProject, name: e.target.value})}
+        className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-white text-sm"
+        placeholder="Project name"
+      />
+    </div>
+    <div>
+      <textarea
+        value={newProject.description}
+        onChange={(e) => setNewProject({...newProject, description: e.target.value})}
+        rows={2}
+        className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-white text-sm"
+        placeholder="Project description"
+      />
+    </div>
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+      <input
+        type="text"
+        value={newProject.technologies}
+        onChange={(e) => setNewProject({...newProject, technologies: e.target.value})}
+        className="px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-white text-sm"
+        placeholder="Technologies (comma-separated)"
+      />
+      <input
+        type="text"
+        value={newProject.duration}
+        onChange={(e) => setNewProject({...newProject, duration: e.target.value})}
+        className="px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-white text-sm"
+        placeholder="Duration (e.g., Ongoing, 3 months)"
+      />
+    </div>
+    <button
+      onClick={handleAddProject}
+      className="w-full px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors text-sm"
+    >
+      <FiCheck className="inline mr-2" size={14} />
+      Add Project
+    </button>
+  </div>
+</div>
                   {/* Action Buttons */}
                   <div className="flex gap-3 pt-4">
                     <button
@@ -579,7 +726,45 @@ function Settings() {
                 </div>
               </div>
             )}
-
+{hasResume && userProfile?.projects && Array.isArray(userProfile.projects) && userProfile.projects.length > 0 && !isEditingProfile && (
+  <div className="mt-6">
+    <div className="flex items-center mb-3">
+      <span className="text-sm text-gray-400">Projects ({userProfile.projects.length})</span>
+    </div>
+    <div className="space-y-3">
+      {userProfile.projects.slice(0, 3).map((project, index) => (
+        <div key={index} className="bg-gray-700/30 border border-gray-600 rounded-lg p-4">
+          <h4 className="font-medium text-white text-sm">{project.name}</h4>
+          <p className="text-gray-300 text-xs mt-1 leading-relaxed">
+            {project.description.length > 100 ? project.description.substring(0, 100) + '...' : project.description}
+          </p>
+          {project.technologies && project.technologies.length > 0 && (
+            <div className="flex flex-wrap gap-1 mt-2">
+              {project.technologies.slice(0, 5).map((tech, techIndex) => (
+                <span key={techIndex} className="bg-blue-900/50 text-blue-200 px-2 py-1 rounded text-xs border border-blue-500/30">
+                  {tech}
+                </span>
+              ))}
+              {project.technologies.length > 5 && (
+                <span className="bg-gray-600 text-gray-300 px-2 py-1 rounded text-xs">
+                  +{project.technologies.length - 5}
+                </span>
+              )}
+            </div>
+          )}
+          <p className="text-gray-400 text-xs mt-2">{project.duration}</p>
+        </div>
+      ))}
+      {userProfile.projects.length > 3 && (
+        <div className="text-center">
+          <span className="bg-gray-700 text-gray-300 px-3 py-1 rounded-md text-xs">
+            +{userProfile.projects.length - 3} more projects
+          </span>
+        </div>
+      )}
+    </div>
+  </div>
+)}
             {hasResume && userProfile?.summary && !isEditingProfile && (
               <div className="mt-6">
                 <div className="flex items-center mb-3">
