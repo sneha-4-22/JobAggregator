@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
-import account from '../appwrite'
+import { account } from '../appwrite' 
 import { 
   FiUser, 
   FiUpload, 
