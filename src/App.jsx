@@ -39,7 +39,8 @@ function App() {
             element={
               isVerified 
                 ? <Dashboard /> 
-                : <Navigate to="/verify-email\" replace />
+                : <Navigate to="/verify-email" replace />
+
             } 
           />
         </Route>
