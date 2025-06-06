@@ -22,7 +22,7 @@ function Dashboard() {
     getUserStats
   } = useUser()
 
-  const API_BASE_URL = 'http://127.0.0.1:5000'
+  const API_BASE_URL = 'https://gigi-back.onrender.com'
 
   const userStats = getUserStats()
 
@@ -184,7 +184,7 @@ function Dashboard() {
           console.warn('API connection failed - check if Flask server is running')
         }
       } catch {
-        console.warn('Cannot connect to Flask server - make sure it\'s running on http://127.0.0.1:5000')
+        console.warn('Cannot connect to Flask server - make sure it\'s running on https://gigi-back.onrender.com')
       }
     }
     testConnection()

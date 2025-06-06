@@ -102,7 +102,7 @@ export function UserProvider({ children }) {
       const formData = new FormData();
       formData.append('resume', resumeFile);
 
-      const response = await fetch('http://127.0.0.1:5000/api/analyze-resume', {
+      const response = await fetch('https://gigi-back.onrender.com/api/analyze-resume', {
         method: 'POST',
         body: formData
       });
@@ -201,7 +201,7 @@ export function UserProvider({ children }) {
       formData.append('file', resumeFile);
       
       // This would call your backend that uses Gemini API
-      const response = await fetch('http://127.0.0.1:5000/api/gemini-analyze-resume', {
+      const response = await fetch('https://gigi-back.onrender.com/api/gemini-analyze-resume', {
         method: 'POST',
         body: formData
       });

@@ -58,7 +58,7 @@ function UploadResume() {
       formData.append('resume', file)
       
       // Upload to extract email API
-      const response = await fetch('http://127.0.0.1:5000/api/extract-email', {
+      const response = await fetch('https://gigi-back.onrender.com/api/extract-email', {
         method: 'POST',
         body: formData
       })
