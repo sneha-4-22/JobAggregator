@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { FiSearch, FiFilter, FiMapPin, FiBriefcase, FiClock, FiBookmark, FiCheckCircle, FiUpload, FiUser, FiExternalLink, FiSettings, FiEdit } from 'react-icons/fi'
 import { useUser } from '../context/UserContext'
+import BugReportButton from './BugReportButton'
 
 function Dashboard() {
   const [jobs, setJobs] = useState([])
@@ -733,6 +734,10 @@ function Dashboard() {
           </div>
         )}
       </div>
+      <BugReportButton 
+  userEmail={user?.email || ''} 
+  userName={user?.name || ''} 
+/>
     </div>
   )
 }
