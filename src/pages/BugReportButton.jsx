@@ -9,7 +9,10 @@ import {
   Trash2 as FiTrash2,
   Check as FiCheck
 } from 'lucide-react';
-// Main Bug Report Modal Component
+import emailjs from '@emailjs/browser';
+const EMAILJS_SERVICE_ID = "service_r2y7zet";
+const EMAILJS_TEMPLATE_ID = "template_m7dykii"; 
+const EMAILJS_PUBLIC_KEY = "RsMQjPMJQXswRhgmi";
 const BugReportModal = ({ isOpen, onClose, userEmail = '', userName = '' }) => {
   const [formData, setFormData] = useState({
     type: 'bug', 
@@ -31,8 +34,6 @@ const BugReportModal = ({ isOpen, onClose, userEmail = '', userName = '' }) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitSuccess, setSubmitSuccess] = useState(false);
   const [errors, setErrors] = useState({});
-
-  // Auto-detect browser and device info
   React.useEffect(() => {
     if (isOpen) {
       const browserInfo = navigator.userAgent;
@@ -57,7 +58,6 @@ const BugReportModal = ({ isOpen, onClose, userEmail = '', userName = '' }) => {
       [field]: value
     }));
     
-    // Clear error when user starts typing
     if (errors[field]) {
       setErrors(prev => ({
         ...prev,
@@ -65,29 +65,73 @@ const BugReportModal = ({ isOpen, onClose, userEmail = '', userName = '' }) => {
       }));
     }
   };
-
-  const handleFileUpload = (event) => {
-    const files = Array.from(event.target.files);
+const compressImage = (file, maxWidth = 800, quality = 0.7) => {
+  return new Promise((resolve) => {
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+    const img = new Image();
     
-    files.forEach(file => {
-      if (file.type.startsWith('image/') && file.size <= 5 * 1024 * 1024) { // 5MB limit
+    img.onload = () => {
+      // Calculate new dimensions
+      let { width, height } = img;
+      if (width > maxWidth) {
+        height = (height * maxWidth) / width;
+        width = maxWidth;
+      }
+      
+      canvas.width = width;
+      canvas.height = height;
+      
+      // Draw and compress
+      ctx.drawImage(img, 0, 0, width, height);
+      
+      canvas.toBlob((blob) => {
         const reader = new FileReader();
-        reader.onload = (e) => {
+        reader.onload = (e) => resolve(e.target.result);
+        reader.readAsDataURL(blob);
+      }, 'image/jpeg', quality);
+    };
+    
+    img.src = URL.createObjectURL(file);
+  });
+};
+
+ const handleFileUpload = async (event) => {
+  const files = Array.from(event.target.files);
+  
+  for (const file of files) {
+    if (file.type.startsWith('image/') && file.size <= 5 * 1024 * 1024) {
+      try {
+        // Compress the image
+        const compressedDataUrl = await compressImage(file, 600, 0.6);
+        
+        // Check if compressed size is reasonable
+        const base64Size = (compressedDataUrl.length * 3) / 4; // Approximate size in bytes
+        
+        if (base64Size < 30000) { // Less than 30KB
           setScreenshots(prev => [...prev, {
             id: Date.now() + Math.random(),
             file: file,
-            preview: e.target.result,
-            name: file.name
+            preview: compressedDataUrl,
+            name: file.name,
+            originalSize: file.size,
+            compressedSize: base64Size
           }]);
-        };
-        reader.readAsDataURL(file);
-      } else {
-        alert('Please upload images only (max 5MB each)');
+        } else {
+          alert(`Image ${file.name} is too large even after compression. Please use a smaller image.`);
+        }
+      } catch (error) {
+        console.error('Error compressing image:', error);
+        alert(`Failed to process ${file.name}`);
       }
-    });
-    
-    event.target.value = '';
-  };
+    } else {
+      alert('Please upload images only (max 5MB each)');
+    }
+  }
+  
+  event.target.value = '';
+};
+
 
   const removeScreenshot = (id) => {
     setScreenshots(prev => prev.filter(img => img.id !== id));
@@ -119,60 +163,185 @@ const BugReportModal = ({ isOpen, onClose, userEmail = '', userName = '' }) => {
   };
 
   const submitReport = async () => {
-    if (!validateForm()) return;
+  if (!validateForm()) return;
+  
+  setIsSubmitting(true);
+  
+  try {
+    // Convert screenshots to base64 with proper formatting for email
+    const screenshotData = await Promise.all(
+      screenshots.map(async (screenshot, index) => ({
+        name: screenshot.name,
+        data: screenshot.preview.split(',')[1], // base64 data
+        type: screenshot.file.type,
+        size: screenshot.file.size,
+        // Add full data URL for email embedding
+        dataUrl: screenshot.preview, // This includes "data:image/png;base64," prefix
+        index: index
+      }))
+    );
+
+    const reportData = {
+      ...formData,
+      screenshots: screenshotData,
+      submittedAt: new Date().toISOString(),
+      userAgent: navigator.userAgent,
+      url: window.location.href,
+      timestamp: Date.now()
+    };
+
+    await sendEmailNotification(reportData);
+    setSubmitSuccess(true);
+    setTimeout(() => {
+      onClose();
+      resetForm();
+    }, 3000);
     
-    setIsSubmitting(true);
-    
-    try {
-      // Convert screenshots to base64 for email
-      const screenshotData = await Promise.all(
-        screenshots.map(async (screenshot) => ({
-          name: screenshot.name,
-          data: screenshot.preview.split(',')[1], // Remove data:image/jpeg;base64, prefix
-          type: screenshot.file.type
-        }))
-      );
+  } catch (error) {
+    console.error('Error submitting report:', error);
+    alert('Failed to submit report. Please try again.');
+  } finally {
+    setIsSubmitting(false);
+  }
+};
+// Add this constant at the top with your other constants
+const IMGBB_API_KEY = "de49ff7bf64a4d92dbc6726824c4fc95"; // Get free API key from imgbb.com
 
-      const reportData = {
-        ...formData,
-        screenshots: screenshotData,
-        submittedAt: new Date().toISOString(),
-        userAgent: navigator.userAgent,
-        url: window.location.href,
-        timestamp: Date.now()
-      };
-
-      // Here you would integrate with your backend/email service
-      // For now, we'll simulate the API call
-      await simulateSubmission(reportData);
-      
-      setSubmitSuccess(true);
-      
-      // Auto-close after 3 seconds
-      setTimeout(() => {
-        onClose();
-        resetForm();
-      }, 3000);
-      
-    } catch (error) {
-      console.error('Error submitting report:', error);
-      alert('Failed to submit report. Please try again.');
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
-  // Simulate API submission - replace with your actual API call
-  const simulateSubmission = async (reportData) => {
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        // Here you would send the data to your backend
-        // which would then email it to gigrithm.ai@gmail.com
-        console.log('Report submitted:', reportData);
-        resolve();
-      }, 2000);
+const sendEmailNotification = async (reportData) => {
+  try {
+    const submittedAt = new Date(reportData.submittedAt).toLocaleString('en-US', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+      timeZoneName: 'short'
     });
-  };
+
+    let deviceInfoFormatted = reportData.deviceInfo;
+    try {
+      const deviceObj = JSON.parse(reportData.deviceInfo);
+      deviceInfoFormatted = `Platform: ${deviceObj.platform}
+Language: ${deviceObj.language}  
+Screen Resolution: ${deviceObj.screen}
+Browser Viewport: ${deviceObj.viewport}`;
+    } catch (e) {
+      console.log('Could not parse device info, using raw data');
+    }
+
+    const getUrgencyDisplay = (urgency) => {
+      const urgencyMap = {
+        'low': '🟢 LOW',
+        'medium': '🟡 MEDIUM', 
+        'high': '🟠 HIGH',
+        'critical': '🔴 CRITICAL'
+      };
+      return urgencyMap[urgency.toLowerCase()] || urgency.toUpperCase();
+    };
+
+    const getTypeDisplay = (type) => {
+      const typeMap = {
+        'bug': '🐛 BUG REPORT',
+        'feature': '💡 FEATURE REQUEST',
+        'feedback': '💬 FEEDBACK'
+      };
+      return typeMap[type.toLowerCase()] || type.toUpperCase();
+    };
+
+    // Upload screenshots to ImgBB and get URLs
+    let uploadedScreenshots = [];
+    if (reportData.screenshots && reportData.screenshots.length > 0) {
+      console.log('Uploading screenshots to ImgBB...');
+      
+      for (const screenshot of reportData.screenshots) {
+        try {
+          const base64Data = screenshot.data || screenshot.preview.split(',')[1];
+          
+          const formData = new FormData();
+          formData.append('image', base64Data);
+          formData.append('key', IMGBB_API_KEY);
+          
+          const response = await fetch('https://api.imgbb.com/1/upload', {
+            method: 'POST',
+            body: formData
+          });
+          
+          const result = await response.json();
+          
+          if (result.success) {
+            const sizeInBytes = screenshot.compressedSize || screenshot.originalSize || screenshot.file?.size;
+      const sizeInKB = sizeInBytes ? Math.round(sizeInBytes / 1024) : 0;
+            uploadedScreenshots.push({
+              name: screenshot.name,
+              url: result.data.url,
+              thumb: result.data.thumb.url,
+              size: sizeInKB
+            });
+            console.log('✅ Screenshot uploaded:', screenshot.name);
+          } else {
+            console.error('❌ Failed to upload screenshot:', screenshot.name, result);
+          }
+        } catch (error) {
+          console.error('❌ Error uploading screenshot:', screenshot.name, error);
+        }
+      }
+    }
+
+    const emailData = {
+      type: getTypeDisplay(reportData.type),
+      title: reportData.title,
+      description: reportData.description,
+      category: reportData.category.charAt(0).toUpperCase() + reportData.category.slice(1),
+      urgency: getUrgencyDisplay(reportData.urgency),
+      steps: reportData.steps || 'N/A',
+      expected: reportData.expected || 'N/A', 
+      actual: reportData.actual || 'N/A',
+      contactName: reportData.contactName || 'Anonymous User',
+      contactEmail: reportData.contactEmail,
+      browser: reportData.browser,
+      deviceInfo: deviceInfoFormatted,
+      url: reportData.url,
+      screenshots_count: uploadedScreenshots.length,
+      submitted_at: submittedAt,
+      timestamp: reportData.timestamp || Date.now(),
+      userAgent: reportData.userAgent || navigator.userAgent,
+      allowContact: reportData.allowContact ? 'Yes' : 'No',
+      reportId: `BR-${Date.now()}-${Math.random().toString(36).substr(2, 5).toUpperCase()}`,
+      
+      // Create HTML with actual screenshot URLs
+      screenshots_html: uploadedScreenshots.length > 0 
+  ? uploadedScreenshots.map((screenshot, index) => {
+      const sizeText = screenshot.size > 0 ? `${screenshot.size}KB` : 'Unknown size';
+      return `<div style="margin: 15px 0; text-align: center; border: 1px solid #ddd; border-radius: 8px; padding: 10px;">
+        <h5 style="margin: 5px 0; color: #6c757d;">Screenshot ${index + 1}: ${screenshot.name}</h5>
+        <img src="${screenshot.url}" alt="${screenshot.name}" style="max-width: 100%; height: auto; border-radius: 4px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);" />
+        <p style="font-size: 11px; color: #888; margin: 5px 0;">
+          Size: ${sizeText} | 
+          <a href="${screenshot.url}" target="_blank" style="color: #007bff;">View Full Size</a>
+        </p>
+      </div>`;
+    }).join('')
+  : '<p style="color: #6c757d; font-style: italic;">No screenshots provided</p>'
+    };
+
+    console.log('Sending email with data:', emailData);
+
+    // Send the email using EmailJS
+    const result = await emailjs.send(
+      EMAILJS_SERVICE_ID,
+      EMAILJS_TEMPLATE_ID,
+      emailData,
+      EMAILJS_PUBLIC_KEY
+    );
+
+    console.log('✅ Email sent successfully:', result);
+    return result;
+    
+  } catch (error) {
+    console.error('❌ Failed to send email notification:', error);
+    throw error;
+  }
+};
 
   const resetForm = () => {
     setFormData({

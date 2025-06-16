@@ -1,4 +1,4 @@
-import { Client, Account, Databases } from 'appwrite';
+import { Client, Account, Databases, ID } from 'appwrite';
 
 // Initialize Appwrite client
 const client = new Client();
@@ -9,6 +9,7 @@ client
 
 export const account = new Account(client);
 export const databases = new Databases(client);
+export { ID }; // Export ID utility
 
 // Function to check if user's email is verified
 export async function isEmailVerified() {
