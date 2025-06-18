@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react'
-import { FiSearch, FiFilter, FiMapPin, FiBriefcase, FiClock, FiBookmark, FiCheckCircle, FiUpload, FiUser, FiExternalLink, FiSettings, FiEdit } from 'react-icons/fi'
+import { useEffect, useState } from 'react'
+import { FiBookmark, FiBriefcase, FiCheckCircle, FiClock, FiEdit, FiExternalLink, FiFilter, FiMapPin, FiSearch, FiSettings, FiUpload, FiUser } from 'react-icons/fi'
 import { useUser } from '../context/UserContext'
 import BugReportButton from './BugReportButton'
 
@@ -24,6 +24,7 @@ function Dashboard() {
   } = useUser()
 
   const API_BASE_URL = 'https://gigi-back.onrender.com'
+  const rec_API_BASE_URL = 'https://job-recommendation-api-jh7p.onrender.com'
 
   const userStats = getUserStats()
 
@@ -74,7 +75,7 @@ function Dashboard() {
   const fetchPersonalizedJobs = async () => {
     setLoading(true)
     try {
-      const response = await fetch(`${API_BASE_URL}/api/get-personalized-jobs`, {
+      const response = await fetch(`${rec_API_BASE_URL}/api/get-personalized-jobs`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
