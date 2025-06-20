@@ -172,7 +172,7 @@ const USER_ACTIVITY_COLLECTION_ID= 'user_activity'
       await saveJobActivityToAppwrite(jobId)
 
       // Also track via existing API for analytics
-      const response = await fetch(`${API_BASE_URL}/api/track-activity`, {
+      const response = await fetch(`${rec_API_BASE_URL}/api/track-activity`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
