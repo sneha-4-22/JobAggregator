@@ -12,7 +12,8 @@ function Login() {
   const [isLoading, setIsLoading] = useState(false)
   const { loginWithEmailAndPassword } = useUser()
   const navigate = useNavigate()
-
+ 
+ 
   const handleSubmit = async (e) => {
     e.preventDefault()
     
@@ -132,9 +133,9 @@ function Login() {
                 </div>
 
                 <div className="text-sm">
-                  <a href="#" className="text-blue-400 hover:text-blue-300 hover:underline transition-colors">
-                    Forgot your password?
-                  </a>
+                  <Link to="/forgot-password" className="text-blue-400 hover:text-blue-300 hover:underline transition-colors">
+                  Forgot your password?
+                </Link>
                 </div>
               </div>
 

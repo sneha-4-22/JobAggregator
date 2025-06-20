@@ -9,6 +9,8 @@ import NotFound from './pages/NotFound'
 import ProtectedRoute from './components/ProtectedRoute'
 import Login from './pages/Login'
 import Settings from './pages/Settings'
+import ForgotPassword from './pages/ForgotPassword'
+import ResetPassword from './pages/ResetPassword'
 function App() {
   const { current, loading, isVerified } = useUser()
   
@@ -44,7 +46,8 @@ function App() {
             } 
           />
         </Route>
-
+        <Route path="forgot-password" element={<ForgotPassword />} />
+        <Route path="reset-password" element={<ResetPassword />} />
         {/* 404 route */}
         <Route path="*" element={<NotFound />} />
       </Route>
