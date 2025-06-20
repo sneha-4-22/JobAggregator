@@ -339,7 +339,7 @@ function UploadResume() {
 
   return (
     <div className="min-h-screen bg-gray-900 flex items-center justify-center">
-      <div className="max-w-md mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <motion.div 
           className="max-w-xl mx-auto"
           initial={{ opacity: 0, y: 20 }}
