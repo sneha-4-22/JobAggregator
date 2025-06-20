@@ -11,7 +11,6 @@ function Navbar() {
   const location = useLocation()
   const navigate = useNavigate()
 
-  // Handle scrolling effect
   useEffect(() => {
     const handleScroll = () => {
       if (window.scrollY > 10) {
@@ -47,14 +46,16 @@ function Navbar() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex justify-between items-center">
         {/* Logo */}
         <Link to="/" className="flex items-center">
-          <motion.div 
-            className="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-400"
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.5 }}
-          >
-            Gigrithm
-          </motion.div>
+         
+  <motion.img 
+    src="/logo.png" 
+    alt="Gigrithm" 
+    className="h-12 w-auto self-center"
+    initial={{ opacity: 0, x: -20 }}
+    animate={{ opacity: 1, x: 0 }}
+    transition={{ duration: 0.5 }}
+  />
+
         </Link>
 
         {/* Desktop Navigation */}

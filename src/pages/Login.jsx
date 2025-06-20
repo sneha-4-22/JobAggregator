@@ -12,7 +12,8 @@ function Login() {
   const [isLoading, setIsLoading] = useState(false)
   const { loginWithEmailAndPassword } = useUser()
   const navigate = useNavigate()
-
+ 
+ 
   const handleSubmit = async (e) => {
     e.preventDefault()
     
@@ -55,7 +56,7 @@ function Login() {
     <div className="min-h-screen bg-gray-900 flex items-center justify-center">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <motion.div 
-          className="max-w-md mx-auto"
+          className="max-w-md mx-auto mt-9"
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
@@ -132,9 +133,9 @@ function Login() {
                 </div>
 
                 <div className="text-sm">
-                  <a href="#" className="text-blue-400 hover:text-blue-300 hover:underline transition-colors">
-                    Forgot your password?
-                  </a>
+                  <Link to="/forgot-password" className="text-blue-400 hover:text-blue-300 hover:underline transition-colors">
+                  Forgot your password?
+                </Link>
                 </div>
               </div>
 

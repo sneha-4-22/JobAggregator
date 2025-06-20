@@ -294,7 +294,27 @@ export function UserProvider({ children }) {
       setLoading(false);
     }
   }
+async function sendPasswordRecoveryEmail(email) {
+  try {
+    const resetUrl = `${window.location.origin}/reset-password`;
+    await account.createRecovery(email, resetUrl);
+    return { success: true, message: "Password recovery email sent successfully" };
+  } catch (error) {
+    console.error("Password recovery error:", error);
+    throw error;
+  }
+}
 
+// Complete password recovery
+async function resetPassword(userId, secret, newPassword) {
+  try {
+    await account.updateRecovery(userId, secret, newPassword, newPassword);
+    return { success: true, message: "Password reset successfully" };
+  } catch (error) {
+    console.error("Password reset error:", error);
+    throw error;
+  }
+}
   // Login with email and password
   async function loginWithEmailAndPassword(email, password) {
     try {
@@ -662,7 +682,8 @@ export function UserProvider({ children }) {
       getDashboardData,
       getUserStats,
       isProfileComplete,
-      
+      sendPasswordRecoveryEmail,
+      resetPassword,
       // Utility functions
       processResumeWithAPI,
       processResumeWithGemini
