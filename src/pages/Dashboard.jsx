@@ -35,6 +35,176 @@ function Dashboard() {
       fetchDefaultJobs()
     }
   }, [hasResume, userProfile, filters])
+  
+
+
+  // Appwrite configuration
+const DATABASE_ID = 'gigrithm'
+const JOBS_COLLECTION_ID='aggregated_jobs'
+const USERS_COLLECTION_ID='users'
+const USER_ACTIVITY_COLLECTION_ID= 'user_activity'
+  
+  useEffect(() => {
+    if (hasResume && userProfile) {
+      fetchPersonalizedJobs()
+    } else {
+      fetchDefaultJobs()
+    }
+  }, [hasResume, userProfile, filters])
+
+  // Function to save job click activity to Appwrite
+  const saveJobActivityToAppwrite = async (jobId) => {
+    if (!user?.id) {
+      console.warn('User not authenticated')
+      return
+    }
+
+    try {
+      // First, get existing activities for this user
+      const existingActivities = await databases.listDocuments(
+        DATABASE_ID,
+        USER_ACTIVITY_COLLECTION_ID,
+        [
+          // Query to get activities for current user, ordered by creation date
+          `userId=${user.id}`
+        ]
+      )
+
+      let recentActivities = []
+      
+      // Parse existing recent_activity if it exists
+      if (existingActivities.documents.length > 0) {
+        const userActivityDoc = existingActivities.documents[0]
+        if (userActivityDoc.recent_activity) {
+          try {
+            recentActivities = JSON.parse(userActivityDoc.recent_activity)
+          } catch (e) {
+            console.warn('Error parsing existing activities:', e)
+            recentActivities = []
+          }
+        }
+      }
+
+      // Add new activity (avoid duplicates)
+      const newActivity = {
+        jobId: jobId,
+        timestamp: new Date().toISOString(),
+        actionType: 'job_click'
+      }
+
+      // Remove existing entry for this job if it exists
+      recentActivities = recentActivities.filter(activity => activity.jobId !== jobId)
+      
+      // Add new activity at the beginning
+      recentActivities.unshift(newActivity)
+      
+      // Keep only last 10 activities
+      recentActivities = recentActivities.slice(0, 10)
+
+      const activityData = {
+        userId: user.id,
+        recent_activity: JSON.stringify(recentActivities),
+        lastUpdated: new Date().toISOString()
+      }
+
+      // Update or create the activity document
+      if (existingActivities.documents.length > 0) {
+        // Update existing document
+        await databases.updateDocument(
+          DATABASE_ID,
+          USER_ACTIVITY_COLLECTION_ID,
+          existingActivities.documents[0].$id,
+          activityData
+        )
+      } else {
+        // Create new document
+        await databases.createDocument(
+          DATABASE_ID,
+          USER_ACTIVITY_COLLECTION_ID,
+          ID.unique(),
+          activityData
+        )
+      }
+
+      console.log('Job activity saved successfully')
+    } catch (error) {
+      console.error('Error saving job activity to Appwrite:', error)
+    }
+  }
+
+  // Function to get user's recent activities for recommendations
+  const getUserRecentActivities = async () => {
+    if (!user?.id) return []
+
+    try {
+      const response = await databases.listDocuments(
+        DATABASE_ID,
+        USER_ACTIVITY_COLLECTION_ID,
+        [
+          `userId=${user.id}`
+        ]
+      )
+
+      if (response.documents.length > 0) {
+        const userActivityDoc = response.documents[0]
+        if (userActivityDoc.recent_activity) {
+          try {
+            const activities = JSON.parse(userActivityDoc.recent_activity)
+            return activities.map(activity => activity.jobId)
+          } catch (e) {
+            console.warn('Error parsing activities:', e)
+            return []
+          }
+        }
+      }
+      return []
+    } catch (error) {
+      console.error('Error fetching user activities:', error)
+      return []
+    }
+  }
+
+  const trackJobClick = async (jobId, jobTitle, companyName) => {
+    if (!user?.id) return
+
+    try {
+      // Save to Appwrite database
+      await saveJobActivityToAppwrite(jobId)
+
+      // Also track via existing API for analytics
+      const response = await fetch(`${API_BASE_URL}/api/track-activity`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          userId: user.id,
+          jobId: jobId,
+          jobTitle: jobTitle,
+          companyName: companyName,
+          actionType: 'job_click',
+          timestamp: new Date().toISOString()
+        })
+      })
+
+      if (!response.ok) {
+        console.warn('Failed to track job click activity via API')
+      }
+    } catch (error) {
+      console.error('Error tracking job click:', error)
+    }
+  }
+
+  // Enhanced job click handler
+  const handleJobClick = (job, applyLink) => {
+    // Track the activity
+    trackJobClick(job.id, job.title, job.company)
+    
+    // Open the apply link
+    if (applyLink && applyLink !== '#') {
+      window.open(applyLink, '_blank', 'noopener,noreferrer')
+    }
+  }
 
   const fetchDefaultJobs = async () => {
     setLoading(true)
