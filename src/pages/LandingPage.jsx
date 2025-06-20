@@ -46,7 +46,7 @@ function LandingPage() {
       <section className="relative bg-gradient-to-br from-blue-900 via-purple-900 to-indigo-900 text-white min-h-[60vh] flex items-center">
         <div className="absolute inset-0 bg-black opacity-40"></div>
         <div className="absolute inset-0 bg-gradient-to-r from-blue-600/20 to-purple-600/20"></div>
-        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 md:py-16 lg:py-20">
+        <div className="relative max-w-md mx-auto px-4 sm:px-6 lg:px-8 py-12 md:py-16 lg:py-20">
           <motion.div
             className="max-w-4xl mx-auto text-center"
             variants={containerVariants}
@@ -88,7 +88,7 @@ function LandingPage() {
 
       {/* Features Section */}
       <section className="py-24 bg-gray-900">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="max-w-md mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-20">
             <h2 className="text-4xl md:text-5xl font-bold mb-6 text-white">
               How It Works
@@ -176,7 +176,7 @@ function LandingPage() {
 
       {/* Stats Section */}
       <section className="py-24 bg-gray-800">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="max-w-md mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             <motion.div 
               className="bg-gray-900 rounded-2xl p-8 text-center border border-gray-700 hover:border-blue-400 transition-all duration-300 hover:shadow-xl group"
@@ -225,7 +225,7 @@ function LandingPage() {
 
       {/* Team Section */}
       <section className="py-24 bg-gray-900">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="max-w-md mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-20">
             <h2 className="text-4xl md:text-5xl font-bold mb-6 text-white">Meet Our Team</h2>
             <p className="text-xl text-gray-300 max-w-3xl mx-auto leading-relaxed">
@@ -264,7 +264,7 @@ function LandingPage() {
       {/* CTA Section */}
       <section className="py-24 bg-gradient-to-br from-blue-900 via-purple-900 to-indigo-900 text-white relative overflow-hidden">
         <div className="absolute inset-0 bg-black opacity-20"></div>
-        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+        <div className="relative max-w-md mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <motion.div
             initial={{ opacity: 0, y: 30 }}
             whileInView={{ opacity: 1, y: 0 }}

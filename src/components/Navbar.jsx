@@ -44,7 +44,7 @@ function Navbar() {
           : 'bg-transparent'
       } py-4`}
     >
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex justify-between items-center">
+      <div className="max-w-md mx-auto px-4 sm:px-6 lg:px-8 flex justify-between items-center">
         {/* Logo */}
         <Link to="/" className="flex items-center">
           <motion.div 
@@ -124,7 +124,7 @@ function Navbar() {
           animate={{ opacity: 1, height: 'auto' }}
           transition={{ duration: 0.3 }}
         >
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex flex-col space-y-4">
+          <div className="max-w-md mx-auto px-4 sm:px-6 lg:px-8 py-4 flex flex-col space-y-4">
             <Link 
               to="/" 
               className={`font-medium py-2 transition-colors ${
