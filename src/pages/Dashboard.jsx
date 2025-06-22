@@ -23,175 +23,155 @@ function Dashboard() {
     getUserStats
   } = useUser()
 
-  // Fixed Dashboard.jsx - Activity Tracking Functions
+  const API_BASE_URL = 'https://gigi-back.onrender.com'
+  const rec_API_BASE_URL = 'https://job-recommendation-api-jh7p.onrender.com'
 
-const API_BASE_URL = 'https://gigi-back.onrender.com'
-const rec_API_BASE_URL = 'https://job-recommendation-api-jh7p.onrender.com'
+  const userStats = getUserStats()
 
-// Appwrite configuration
+  useEffect(() => {
+    if (hasResume && userProfile) {
+      fetchPersonalizedJobs()
+    } else {
+      fetchDefaultJobs()
+    }
+  }, [hasResume, userProfile, filters])
+  
+
+
+  // Appwrite configuration
 const DATABASE_ID = 'gigrithm'
-const JOBS_COLLECTION_ID = 'aggregated_jobs'
-const USERS_COLLECTION_ID = 'users'
-const USER_ACTIVITY_COLLECTION_ID = 'user_activity'
+const JOBS_COLLECTION_ID='aggregated_jobs'
+const USERS_COLLECTION_ID='users'
+const USER_ACTIVITY_COLLECTION_ID= 'user_activity'
+  
+  useEffect(() => {
+    if (hasResume && userProfile) {
+      fetchPersonalizedJobs()
+    } else {
+      fetchDefaultJobs()
+    }
+  }, [hasResume, userProfile, filters])
 
-// FIXED: Function to save job click activity to Appwrite (matching backend structure)
-// FIXED: Function to save job click activity to Appwrite
-const saveJobActivityToAppwrite = async (jobId) => {
-  if (!user?.id) {
-    console.warn('User not authenticated')
-    return false
-  }
-
-  try {
-    console.log(`Tracking job click: User ${user.id} clicked job ${jobId}`)
-    
-    // Get existing activity document for this user
-    let existingActivity = null
-    try {
-      existingActivity = await databases.getDocument(
-        DATABASE_ID,
-        USER_ACTIVITY_COLLECTION_ID,
-        user.id // Use user.id as document ID
-      )
-      console.log('Found existing activity document:', existingActivity)
-    } catch (error) {
-      if (error.code !== 404) {
-        console.error('Error fetching existing activity:', error)
-        throw error // Re-throw non-404 errors
-      }
-      console.log('No existing activity document found, will create new one')
+  // Function to save job click activity to Appwrite
+  const saveJobActivityToAppwrite = async (jobId) => {
+    if (!user?.id) {
+      console.warn('User not authenticated')
+      return
     }
 
-    // Prepare recent activities list
-    let recentActivities = []
-    
-    if (existingActivity) {
-      // Extract existing activities from individual fields
-      for (let i = 1; i <= 10; i++) {
-        const activityKey = i === 1 ? 'recent_activity' : `recent_activity_${i}`
-        const activityValue = existingActivity[activityKey]
-        if (activityValue && activityValue !== '0' && activityValue.trim() !== '') {
-          recentActivities.push(activityValue)
+    try {
+      // First, get existing activities for this user
+      const existingActivities = await databases.listDocuments(
+        DATABASE_ID,
+        USER_ACTIVITY_COLLECTION_ID,
+        [
+          // Query to get activities for current user, ordered by creation date
+          `userId=${user.id}`
+        ]
+      )
+
+      let recentActivities = []
+      
+      // Parse existing recent_activity if it exists
+      if (existingActivities.documents.length > 0) {
+        const userActivityDoc = existingActivities.documents[0]
+        if (userActivityDoc.recent_activity) {
+          try {
+            recentActivities = JSON.parse(userActivityDoc.recent_activity)
+          } catch (e) {
+            console.warn('Error parsing existing activities:', e)
+            recentActivities = []
+          }
         }
       }
-      console.log('Existing activities:', recentActivities)
-    }
 
-    // Add new job_id at the beginning (avoid duplicates)
-    recentActivities = recentActivities.filter(id => id !== jobId)
-    recentActivities.unshift(jobId)
-    
-    // Keep only last 10 activities
-    recentActivities = recentActivities.slice(0, 10)
-    console.log('Updated activities list:', recentActivities)
+      // Add new activity (avoid duplicates)
+      const newActivity = {
+        jobId: jobId,
+        timestamp: new Date().toISOString(),
+        actionType: 'job_click'
+      }
 
-    // Prepare update data - ENSURE userId is ALWAYS included
-    const updateData = { 
-      userId: user.id  // This is critical - must match the userId field in schema
-    }
-    
-    // Fill the recent_activity fields
-    for (let i = 0; i < 10; i++) {
-      const activityKey = i === 0 ? 'recent_activity' : `recent_activity_${i + 1}`
-      updateData[activityKey] = i < recentActivities.length ? recentActivities[i] : '0'
-    }
+      // Remove existing entry for this job if it exists
+      recentActivities = recentActivities.filter(activity => activity.jobId !== jobId)
+      
+      // Add new activity at the beginning
+      recentActivities.unshift(newActivity)
+      
+      // Keep only last 10 activities
+      recentActivities = recentActivities.slice(0, 10)
 
-    console.log('Prepared update data:', updateData)
+      const activityData = {
+        userId: user.id,
+        recent_activity: JSON.stringify(recentActivities),
+        lastUpdated: new Date().toISOString()
+      }
 
-    let result
-    if (existingActivity) {
-      // Update existing document
-      result = await databases.updateDocument(
-        DATABASE_ID,
-        USER_ACTIVITY_COLLECTION_ID,
-        user.id,
-        updateData
-      )
-      console.log('Successfully updated existing activity document:', result)
-    } else {
-      // Create new document with user.id as document ID
-      result = await databases.createDocument(
-        DATABASE_ID,
-        USER_ACTIVITY_COLLECTION_ID,
-        user.id, // Document ID
-        updateData
-      )
-      console.log('Successfully created new activity document:', result)
-    }
+      // Update or create the activity document
+      if (existingActivities.documents.length > 0) {
+        // Update existing document
+        await databases.updateDocument(
+          DATABASE_ID,
+          USER_ACTIVITY_COLLECTION_ID,
+          existingActivities.documents[0].$id,
+          activityData
+        )
+      } else {
+        // Create new document
+        await databases.createDocument(
+          DATABASE_ID,
+          USER_ACTIVITY_COLLECTION_ID,
+          ID.unique(),
+          activityData
+        )
+      }
 
-    return true
-  } catch (error) {
-    console.error('Error saving job activity to Appwrite:', error)
-    
-    // More detailed error logging
-    if (error.code) {
-      console.error('Appwrite error code:', error.code)
+      console.log('Job activity saved successfully')
+    } catch (error) {
+      console.error('Error saving job activity to Appwrite:', error)
     }
-    if (error.message) {
-      console.error('Error message:', error.message)
-    }
-    if (error.response) {
-      console.error('Error response:', error.response)
-    }
-    
-    return false
-  }
-}
-
-// IMPROVED: Enhanced job click handler with better error handling
-const handleJobClick = async (job, applyLink = null) => {
-  // Extract job ID - try multiple possible fields
-  const jobId = job.$id || job.id || job.jobId || job._id
-  const jobTitle = job.jobRole || job.title || job.name || 'Unknown Job'
-  const companyName = job.companyName || job.company || 'Unknown Company'
-
-  if (!jobId) {
-    console.error('No job ID found in job object:', job)
-    return
   }
 
-  console.log(`Handling job click for: ${jobTitle} at ${companyName} (ID: ${jobId})`)
+  // Function to get user's recent activities for recommendations
+  const getUserRecentActivities = async () => {
+    if (!user?.id) return []
 
-  // Track the activity with error handling
-  try {
-    const trackingSuccess = await trackJobClick(jobId, jobTitle, companyName)
-    if (!trackingSuccess) {
-      console.warn('Job tracking failed, but continuing with navigation')
-    }
-  } catch (error) {
-    console.error('Error in job tracking:', error)
-    // Continue with navigation even if tracking fails
-  }
-  
-  // Open the apply link if provided
-  const linkToOpen = applyLink || job.applyLink || job.applicationUrl || job.url
-  if (linkToOpen && linkToOpen !== '#' && linkToOpen !== '') {
-    window.open(linkToOpen, '_blank', 'noopener,noreferrer')
-  } else {
-    console.warn('No valid apply link found for job:', jobTitle)
-  }
-}
-
-// IMPROVED: Track job click with comprehensive error handling
-const trackJobClick = async (jobId, jobTitle, companyName) => {
-  if (!user?.id) {
-    console.warn('User not authenticated, cannot track job click')
-    return false
-  }
-
-  console.log(`Tracking job click: ${jobTitle} at ${companyName} (ID: ${jobId})`)
-
-  try {
-    // Primary tracking: Save to Appwrite database
-    const appwriteSuccess = await saveJobActivityToAppwrite(jobId)
-    
-    if (!appwriteSuccess) {
-      console.error('Failed to save job activity to Appwrite')
-      return false
-    }
-
-    // Secondary tracking: API call (don't fail if this doesn't work)
     try {
+      const response = await databases.listDocuments(
+        DATABASE_ID,
+        USER_ACTIVITY_COLLECTION_ID,
+        [
+          `userId=${user.id}`
+        ]
+      )
+
+      if (response.documents.length > 0) {
+        const userActivityDoc = response.documents[0]
+        if (userActivityDoc.recent_activity) {
+          try {
+            const activities = JSON.parse(userActivityDoc.recent_activity)
+            return activities.map(activity => activity.jobId)
+          } catch (e) {
+            console.warn('Error parsing activities:', e)
+            return []
+          }
+        }
+      }
+      return []
+    } catch (error) {
+      console.error('Error fetching user activities:', error)
+      return []
+    }
+  }
+
+  const trackJobClick = async (jobId, jobTitle, companyName) => {
+    if (!user?.id) return
+
+    try {
+      // Save to Appwrite database
+      await saveJobActivityToAppwrite(jobId)
+
+      // Also track via existing API for analytics
       const response = await fetch(`${rec_API_BASE_URL}/api/track-activity`, {
         method: 'POST',
         headers: {
@@ -207,119 +187,101 @@ const trackJobClick = async (jobId, jobTitle, companyName) => {
         })
       })
 
-      if (response.ok) {
-        console.log('Job click tracked via API successfully')
-      } else {
-        console.warn('API tracking failed with status:', response.status)
+      if (!response.ok) {
+        console.warn('Failed to track job click activity via API')
       }
-    } catch (apiError) {
-      console.warn('API tracking failed, but Appwrite tracking succeeded:', apiError.message)
+    } catch (error) {
+      console.error('Error tracking job click:', error)
     }
-
-    return true
-  } catch (error) {
-    console.error('Error in trackJobClick:', error)
-    return false
   }
-}
 
-// DEBUGGING: Function to verify activity saving
-const debugActivitySaving = async (testJobId = 'test_job_123') => {
-  console.log('=== DEBUGGING ACTIVITY SAVING ===')
-  console.log('User:', user)
-  console.log('Test Job ID:', testJobId)
-  console.log('Database ID:', DATABASE_ID)
-  console.log('Collection ID:', USER_ACTIVITY_COLLECTION_ID)
-  
-  try {
-    const success = await saveJobActivityToAppwrite(testJobId)
-    console.log('Debug test result:', success ? 'SUCCESS' : 'FAILED')
+  // Enhanced job click handler
+  const handleJobClick = (job, applyLink) => {
+    // Track the activity
+    trackJobClick(job.id, job.title, job.company)
     
-    // Try to fetch the document to verify
-    const doc = await databases.getDocument(
-      DATABASE_ID,
-      USER_ACTIVITY_COLLECTION_ID,
-      user.id
-    )
-    console.log('Retrieved document after test:', doc)
-    
-  } catch (error) {
-    console.error('Debug test error:', error)
+    // Open the apply link
+    if (applyLink && applyLink !== '#') {
+      window.open(applyLink, '_blank', 'noopener,noreferrer')
+    }
   }
-}
 
-// Call this function in your browser console to test: debugActivitySaving()
-
+  const fetchDefaultJobs = async () => {
+    setLoading(true)
+    try {
+      const params = new URLSearchParams({
+        q: searchTerm,
+        location: filters.location === 'all' ? 'flexible' : filters.location,
+        type: filters.jobType
+      })
+      
+      const response = await fetch(`${API_BASE_URL}/api/search-jobs?${params}`)
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`)
+      }
+      
+      const contentType = response.headers.get("content-type")
+      if (!contentType || !contentType.includes("application/json")) {
+        throw new Error("Response is not JSON")
+      }
+      
+      const data = await response.json()
+      
+      if (data.success) {
+        setJobs(data.jobs)
+      } else {
+        console.error('Error fetching jobs:', data.error)
+        setJobs([])
+      }
+    } catch (error) {
+      console.error('Error fetching jobs:', error)
+      setJobs([])
+    } finally {
+      setLoading(false)
+    }
+  }
 
   const fetchPersonalizedJobs = async () => {
-  setLoading(true)
-  try {
-    // Get user's recent activities for better personalization
-    const recentActivities = await getUserRecentActivities()
-    console.log('Recent activities for personalization:', recentActivities)
-
-    const response = await fetch(`${rec_API_BASE_URL}/api/get-personalized-jobs`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        userId: user?.id || null, // Include user ID for tracking
-        skills: userProfile?.skills || [],
-        location: filters.location === 'all' ? userProfile?.location || 'flexible' : filters.location,
-        job_type: filters.jobType,
-        experience_level: userProfile?.experience_level || 'entry',
-        recent_activities: recentActivities, // Include recent job interactions
-        preferences: {
-          // Additional user preferences if available
-          preferred_companies: userProfile?.preferred_companies || [],
-          salary_range: userProfile?.salary_range || null,
-          work_type: userProfile?.work_type || 'hybrid'
-        }
+    setLoading(true)
+    try {
+      const response = await fetch(`${rec_API_BASE_URL}/api/get-personalized-jobs`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          skills: userProfile?.skills || [],
+          location: filters.location === 'all' ? userProfile?.location || 'flexible' : filters.location,
+          job_type: filters.jobType,
+          experience_level: userProfile?.experience_level || 'entry'
+        })
       })
-    })
-    
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`)
-    }
-    
-    const contentType = response.headers.get("content-type")
-    if (!contentType || !contentType.includes("application/json")) {
-      throw new Error("Response is not JSON")
-    }
-    
-    const data = await response.json()
-    
-    if (data.success) {
-      // Log personalization info for debugging
-      console.log(`Fetched ${data.jobs?.length || 0} personalized jobs`)
-      if (data.personalization_info) {
-        console.log('Personalization applied:', data.personalization_info)
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`)
       }
       
-      setJobs(data.jobs || [])
-    } else {
-      console.error('Error fetching personalized jobs:', data.error)
+      const contentType = response.headers.get("content-type")
+      if (!contentType || !contentType.includes("application/json")) {
+        throw new Error("Response is not JSON")
+      }
       
-      // Fallback to default jobs if personalized fetch fails
-      console.log('Falling back to default jobs...')
-      await fetchDefaultJobs()
-    }
-  } catch (error) {
-    console.error('Error fetching personalized jobs:', error)
-    
-    // Fallback to default jobs on error
-    try {
-      console.log('Attempting fallback to default jobs...')
-      await fetchDefaultJobs()
-    } catch (fallbackError) {
-      console.error('Fallback to default jobs also failed:', fallbackError)
+      const data = await response.json()
+      
+      if (data.success) {
+        setJobs(data.jobs)
+      } else {
+        console.error('Error fetching personalized jobs:', data.error)
+        setJobs([])
+      }
+    } catch (error) {
+      console.error('Error fetching personalized jobs:', error)
       setJobs([])
+    } finally {
+      setLoading(false)
     }
-  } finally {
-    setLoading(false)
   }
-}
 
   const handleResumeUpload = async (event) => {
     const file = event.target.files[0]
@@ -872,7 +834,7 @@ const debugActivitySaving = async (testJobId = 'test_job_123') => {
                                 <FiExternalLink className="ml-2" size={16} />
                               </a>
                             ) : (
-                              <button onClick={() => handleJobClick(job, job.applyLink)} className="px-4 py-2 bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white rounded-lg transition-all duration-300 hover:scale-105">
+                              <button className="px-4 py-2 bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white rounded-lg transition-all duration-300 hover:scale-105">
                                 Apply Now
                               </button>
                             )}
