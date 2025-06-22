@@ -223,32 +223,6 @@ const trackJobClick = async (jobId, jobTitle, companyName) => {
   }
 }
 
-// DEBUGGING: Function to verify activity saving
-const debugActivitySaving = async (testJobId = 'test_job_123') => {
-  console.log('=== DEBUGGING ACTIVITY SAVING ===')
-  console.log('User:', user)
-  console.log('Test Job ID:', testJobId)
-  console.log('Database ID:', DATABASE_ID)
-  console.log('Collection ID:', USER_ACTIVITY_COLLECTION_ID)
-  
-  try {
-    const success = await saveJobActivityToAppwrite(testJobId)
-    console.log('Debug test result:', success ? 'SUCCESS' : 'FAILED')
-    
-    // Try to fetch the document to verify
-    const doc = await databases.getDocument(
-      DATABASE_ID,
-      USER_ACTIVITY_COLLECTION_ID,
-      user.id
-    )
-    console.log('Retrieved document after test:', doc)
-    
-  } catch (error) {
-    console.error('Debug test error:', error)
-  }
-}
-
-// Call this function in your browser console to test: debugActivitySaving()
 
 
   const fetchPersonalizedJobs = async () => {
