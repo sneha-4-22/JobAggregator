@@ -9,6 +9,7 @@ function Dashboard() {
   const [loading, setLoading] = useState(false)
   const [savedJobs, setSavedJobs] = useState([])
   const [resumeAnalyzing, setResumeAnalyzing] = useState(false)
+  const [userStats, setUserStats] = useState(null) // Add local state for userStats
   const [filters, setFilters] = useState({
     jobType: 'internship',
     location: 'all'
@@ -22,6 +23,28 @@ function Dashboard() {
     updateResumeData,
     getUserStats
   } = useUser()
+
+  // Load user stats when component mounts or userProfile changes
+  useEffect(() => {
+    const loadUserStats = async () => {
+      if (hasResume && userProfile && getUserStats) {
+        try {
+          const stats = await getUserStats()
+          setUserStats(stats)
+        } catch (error) {
+          console.error('Error loading user stats:', error)
+          // Set default stats if error occurs
+          setUserStats({
+            skillsCount: userProfile?.skills?.length || 0,
+            workExperienceCount: 0,
+            projectsCount: 0
+          })
+        }
+      }
+    }
+    
+    loadUserStats()
+  }, [hasResume, userProfile, getUserStats])
 
   // Fixed Dashboard.jsx - Activity Tracking Functions
 
@@ -223,7 +246,64 @@ const trackJobClick = async (jobId, jobTitle, companyName) => {
   }
 }
 
+// Add getUserRecentActivities function
+const getUserRecentActivities = async () => {
+  if (!user?.id) {
+    console.warn('User not authenticated, cannot get recent activities')
+    return []
+  }
 
+  try {
+    const activityDoc = await databases.getDocument(
+      DATABASE_ID,
+      USER_ACTIVITY_COLLECTION_ID,
+      user.id
+    )
+    
+    const recentActivities = []
+    for (let i = 1; i <= 10; i++) {
+      const activityKey = i === 1 ? 'recent_activity' : `recent_activity_${i}`
+      const activityValue = activityDoc[activityKey]
+      if (activityValue && activityValue !== '0' && activityValue.trim() !== '') {
+        recentActivities.push(activityValue)
+      }
+    }
+    
+    return recentActivities
+  } catch (error) {
+    if (error.code === 404) {
+      console.log('No activity document found for user')
+    } else {
+      console.error('Error fetching user recent activities:', error)
+    }
+    return []
+  }
+}
+
+// Add fetchDefaultJobs function
+const fetchDefaultJobs = async () => {
+  setLoading(true)
+  try {
+    const response = await fetch(`${API_BASE_URL}/api/jobs`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+      }
+    })
+    
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`)
+    }
+    
+    const data = await response.json()
+    setJobs(data.jobs || [])
+  } catch (error) {
+    console.error('Error fetching default jobs:', error)
+    setJobs([])
+  } finally {
+    setLoading(false)
+  }
+}
 
   const fetchPersonalizedJobs = async () => {
   setLoading(true)
@@ -374,6 +454,15 @@ const trackJobClick = async (jobId, jobTitle, companyName) => {
     testConnection()
   }, [])
 
+  // Initial job fetch when component mounts or filters change
+  useEffect(() => {
+    if (hasResume && userProfile) {
+      fetchPersonalizedJobs()
+    } else {
+      fetchDefaultJobs()
+    }
+  }, [filters, hasResume, userProfile])
+
   return (
     <div className="pt-20 pb-16 min-h-screen bg-gray-900">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -420,7 +509,7 @@ const trackJobClick = async (jobId, jobTitle, companyName) => {
               </div>
               <div className="flex items-center space-x-4">
                 <div className="text-right">
-                  <div className="text-2xl font-bold text-white">{userStats?.skillsCount || 0}</div>
+                  <div className="text-2xl font-bold text-white">{userStats?.skillsCount || userProfile?.skills?.length || 0}</div>
                   <div className="text-sm text-gray-300">Skills</div>
                 </div>
                 <div className="text-right">
@@ -658,6 +747,7 @@ const trackJobClick = async (jobId, jobTitle, companyName) => {
     )}
   </div>
 )}
+        
         {/* Search and Filters */}
         <div className="mb-8 bg-gray-800 rounded-xl shadow-lg p-4 border border-gray-700">
           <div className="flex flex-col md:flex-row md:items-center gap-4">
