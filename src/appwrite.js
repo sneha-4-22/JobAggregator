@@ -39,3 +39,6 @@ export async function completePasswordRecovery(userId, secret, password) {
     throw error;
   }
 }
+
+// Add this constant for your user_activity collection
+export const USER_ACTIVITY_COLLECTION_ID = 'user_activity';

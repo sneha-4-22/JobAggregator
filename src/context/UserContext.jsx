@@ -523,7 +523,6 @@ async function resetPassword(userId, secret, newPassword) {
     }
   }
 
-  // Utility functions for calculations (unchanged)
   function calculateTotalExperience(workExperience) {
     if (!workExperience || workExperience.length === 0) return 0;
     return Array.isArray(workExperience) ? workExperience.length : 1;
@@ -554,14 +553,12 @@ async function resetPassword(userId, secret, newPassword) {
     return calculateResumeCompleteness(resumeData);
   }
 
-  // Check if profile is complete
   function isProfileComplete() {
     return hasResume && userProfile && userProfile.name && 
            userProfile.skills && Array.isArray(userProfile.skills) && userProfile.skills.length > 0 &&
            userProfile.completenessScore >= 70;
   }
 
-  // Get comprehensive user stats
   function getUserStats() {
     if (!userProfile) return null;
 
@@ -578,7 +575,6 @@ async function resetPassword(userId, secret, newPassword) {
     };
   }
 
-  // Get dashboard data
   function getDashboardData() {
     if (!userProfile) return null;
 
@@ -622,7 +618,67 @@ async function resetPassword(userId, secret, newPassword) {
       setUserProfile(null);
     }
   }
+const saveJobActivity = async (jobId) => {
+  try {
+    if (!user) return;
+    
+    const userId = user.$id;
+    
+    let activityDoc;
+    try {
+      const result = await databases.listDocuments(
+        DATABASE_ID,
+        'user_activity', 
+        [Query.equal('userId', userId)]
+      );
+      activityDoc = result.documents[0];
+    } catch (error) {
+      console.log('No existing activity document found');
+    }
 
+    if (activityDoc) {
+      const activities = [];
+      for (let i = 1; i <= 10; i++) {
+        const activity = activityDoc[`recent_activity_${i}`];
+        if (activity && activity !== '0') {
+          activities.push(activity);
+        }
+      }
+      activities.unshift(jobId);
+      
+      const updatedActivities = activities.slice(0, 10);
+      
+      const updateData = { userId };
+      for (let i = 1; i <= 10; i++) {
+        updateData[`recent_activity_${i}`] = updatedActivities[i - 1] || '0';
+      }
+      
+      await databases.updateDocument(
+        DATABASE_ID,
+        'user_activity',
+        activityDoc.$id,
+        updateData
+      );
+    } else {
+      const newData = { userId };
+      newData['recent_activity_1'] = jobId;
+      for (let i = 2; i <= 10; i++) {
+        newData[`recent_activity_${i}`] = '0';
+      }
+      
+      await databases.createDocument(
+        DATABASE_ID,
+        'user_activity',
+        ID.unique(),
+        newData
+      );
+    }
+    
+    console.log('Job activity saved successfully');
+  } catch (error) {
+    console.error('Error saving job activity:', error);
+  }
+};
   async function checkVerificationStatus() {
     try {
       const verified = await checkEmailVerification();
@@ -685,6 +741,7 @@ async function resetPassword(userId, secret, newPassword) {
       sendPasswordRecoveryEmail,
       resetPassword,
       // Utility functions
+      saveJobActivity,
       processResumeWithAPI,
       processResumeWithGemini
     }}>

@@ -20,7 +20,8 @@ function Dashboard() {
     hasResume, 
     userProfile, 
     updateResumeData,
-    getUserStats
+    getUserStats,
+    saveJobActivity 
   } = useUser()
 
   const API_BASE_URL = 'https://gigi-back.onrender.com'
@@ -661,12 +662,15 @@ function Dashboard() {
                                 target="_blank"
                                 rel="noopener noreferrer"
                                 className="inline-flex items-center px-4 py-2 bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white rounded-lg transition-all duration-300 hover:scale-105"
+                                onClick={() => saveJobActivity(job.id)} 
                               >
                                 Apply Now
                                 <FiExternalLink className="ml-2" size={16} />
                               </a>
                             ) : (
-                              <button className="px-4 py-2 bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white rounded-lg transition-all duration-300 hover:scale-105">
+                              <button className="px-4 py-2 bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white rounded-lg transition-all duration-300 hover:scale-105"
+                                  onClick={() => saveJobActivity(job.id)} 
+                              >
                                 Apply Now
                               </button>
                             )}
