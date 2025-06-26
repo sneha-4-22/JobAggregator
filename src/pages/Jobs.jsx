@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { FiBookmark, FiBriefcase, FiCheckCircle, FiClock, FiExternalLink, FiFilter, FiMapPin, FiSearch } from 'react-icons/fi'
 import { useUser } from '../context/UserContext'
-import BugReportButton from './BugReportButton'
+import AddnewJobForm from './AddnewJobForm'
 
 function Jobs() {
   const [jobs, setJobs] = useState([])
@@ -456,7 +456,7 @@ function Jobs() {
           </div>
         )}
       </div>
-      <BugReportButton 
+      <AddnewJobForm 
   userEmail={user?.email || ''} 
   userName={user?.name || ''} 
 />
