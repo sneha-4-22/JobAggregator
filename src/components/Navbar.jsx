@@ -1,8 +1,8 @@
-import { useState, useEffect } from 'react'
+import { motion } from 'framer-motion'
+import { useEffect, useState } from 'react'
+import { FiMenu, FiX } from 'react-icons/fi'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { useUser } from '../context/UserContext'
-import { motion } from 'framer-motion'
-import { FiMenu, FiX } from 'react-icons/fi'
 
 function Navbar() {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
@@ -83,6 +83,32 @@ function Navbar() {
               >
                 Dashboard
               </Link>
+
+               {/* NEW: Jobs Link */}
+              <Link 
+                to="/jobs" 
+                className={`font-medium transition-colors ${
+                  location.pathname === '/jobs' 
+                    ? 'text-blue-400' 
+                    : 'text-gray-300 hover:text-blue-400'
+                }`}
+              >
+                Jobs
+              </Link>
+              
+              {/* NEW: Hackathons Link */}
+              <Link 
+                to="/hackathons" 
+                className={`font-medium transition-colors ${
+                  location.pathname === '/hackathons' 
+                    ? 'text-blue-400' 
+                    : 'text-gray-300 hover:text-blue-400'
+                }`}
+              >
+                Hackathons
+              </Link>
+
+              
               <button 
                 onClick={handleLogout}
                 className="border border-gray-600 text-gray-300 hover:border-blue-400 hover:text-blue-400 font-semibold px-6 py-2 rounded-full transition-all duration-300"
@@ -149,6 +175,31 @@ function Navbar() {
                 >
                   Dashboard
                 </Link>
+
+                {/* NEW: Jobs Link for Mobile */}
+                <Link 
+                  to="/jobs" 
+                  className={`font-medium py-2 transition-colors ${
+                    location.pathname === '/jobs' 
+                      ? 'text-blue-400' 
+                      : 'text-gray-300 hover:text-blue-400'
+                  }`}
+                >
+                  Jobs
+                </Link>
+                
+                {/* NEW: Hackathons Link for Mobile */}
+                <Link 
+                  to="/hackathons" 
+                  className={`font-medium py-2 transition-colors ${
+                    location.pathname === '/hackathons' 
+                      ? 'text-blue-400' 
+                      : 'text-gray-300 hover:text-blue-400'
+                  }`}
+                >
+                  Hackathons
+                </Link>
+                
                 <button 
                   onClick={handleLogout}
                   className="border border-gray-600 text-gray-300 hover:border-blue-400 hover:text-blue-400 font-semibold px-6 py-2 rounded-full transition-all duration-300 w-full"

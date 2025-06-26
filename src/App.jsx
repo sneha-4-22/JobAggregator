@@ -1,16 +1,19 @@
-import { Routes, Route, Navigate } from 'react-router-dom'
-import { useUser } from './context/UserContext'
+import { Navigate, Route, Routes } from 'react-router-dom'
 import Layout from './components/Layout'
+import ProtectedRoute from './components/ProtectedRoute'
+import { useUser } from './context/UserContext'
+import Dashboard from './pages/Dashboard'
+import ForgotPassword from './pages/ForgotPassword'
+import Hackathons from './pages/Hackathons'
+import Jobs from './pages/Jobs'
 import LandingPage from './pages/LandingPage'
+import Login from './pages/Login'
+import NotFound from './pages/NotFound'
+import ResetPassword from './pages/ResetPassword'
+import Settings from './pages/Settings'
 import UploadResume from './pages/UploadResume'
 import VerifyEmail from './pages/VerifyEmail'
-import Dashboard from './pages/Dashboard'
-import NotFound from './pages/NotFound'
-import ProtectedRoute from './components/ProtectedRoute'
-import Login from './pages/Login'
-import Settings from './pages/Settings'
-import ForgotPassword from './pages/ForgotPassword'
-import ResetPassword from './pages/ResetPassword'
+
 function App() {
   const { current, loading, isVerified } = useUser()
      
@@ -83,6 +86,8 @@ function App() {
             } 
           />
         </Route>
+        <Route path="/jobs" element={<Jobs />} />
+        <Route path="/hackathons" element={<Hackathons />} />
         <Route path="forgot-password" element={<ForgotPassword />} />
         <Route path="reset-password" element={<ResetPassword />} />
         {/* 404 route */}
