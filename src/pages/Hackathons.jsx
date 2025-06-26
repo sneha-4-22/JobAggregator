@@ -8,24 +8,19 @@ function Hackathons() {
   const [searchTerm, setSearchTerm] = useState('')
   const [loading, setLoading] = useState(false)
   const [savedHackathons, setSavedHackathons] = useState([])
-  const [resumeAnalyzing, setResumeAnalyzing] = useState(false)
   const [filters, setFilters] = useState({
     mode: 'all',
     location: 'all'
   })
-  const [profileExpanded, setProfileExpanded] = useState(false)
 
   const { 
     current: user, 
     hasResume, 
     userProfile, 
-    updateResumeData,
-    getUserStats
+    updateResumeData
   } = useUser()
 
   const API_BASE_URL = 'https://hackathon-scrapper.onrender.com'
-
-  const userStats = getUserStats()
 
   useEffect(() => {
     fetchHackathons()
@@ -68,15 +63,13 @@ function Hackathons() {
   }
 
   const handleResumeUpload = async (event) => {
-    const file = event.target.files[0]
+    const file = event.target.files?.[0]
     if (!file) return
 
     if (!file.name.toLowerCase().endsWith('.pdf')) {
       alert('Please upload a PDF file')
       return
     }
-
-    setResumeAnalyzing(true)
 
     try {
       await updateResumeData(file)
@@ -85,7 +78,6 @@ function Hackathons() {
       console.error('Error uploading resume:', error)
       alert('Error uploading resume: ' + error.message)
     } finally {
-      setResumeAnalyzing(false)
       event.target.value = ''
     }
   }
