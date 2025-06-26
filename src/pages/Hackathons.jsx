@@ -3,7 +3,7 @@ import { FiBookmark, FiBriefcase, FiCheckCircle, FiClock, FiEdit, FiExternalLink
 import { useUser } from '../context/UserContext'
 import BugReportButton from './BugReportButton'
 
-function Dashboard() {
+function Hackathons() {
   const [jobs, setJobs] = useState([])
   const [searchTerm, setSearchTerm] = useState('')
   const [loading, setLoading] = useState(false)
