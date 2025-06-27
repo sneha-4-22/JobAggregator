@@ -520,7 +520,7 @@ const AddNewJobForm = ({ userEmail = '', userName = '' }) => {
       <div className="fixed bottom-6 left-6 z-40">
         <button
           onClick={() => setIsModalOpen(true)}
-          className="w-14 h-14 bg-gradient-to-r from-green-500 to-blue-600 hover:from-green-600 hover:to-blue-700 text-white rounded-full shadow-lg hover:shadow-xl transition-all duration-300 flex items-center justify-center group"
+          className="w-14 h-14 bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white rounded-full shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 flex items-center justify-center group"
           title="Post a new job"
         >
           <FiPlus className="text-xl group-hover:scale-110 transition-transform" />

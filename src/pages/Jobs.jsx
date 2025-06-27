@@ -262,7 +262,7 @@ const deleteUserJob = async (documentId) => {
       <div className="flex-grow">
         <div className="flex items-center gap-2 mb-2">
           <h4 className="text-lg font-semibold text-white">{job.jobRole}</h4>
-          <span className="bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white rounded-lg transition-all duration-300 hover:scale-105 px-2 py-1 rounded text-xs border border-blue-500">
+          <span className="bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white rounded-lg transition-all duration-300 hover:scale-105 px-2 py-1 text-xs border border-blue-500">
             Your Post
           </span>
         </div>
