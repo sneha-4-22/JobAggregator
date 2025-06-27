@@ -1,92 +1,67 @@
 import { useEffect, useState } from 'react'
-import { FiBookmark, FiBriefcase, FiCheckCircle, FiClock, FiExternalLink, FiFilter, FiMapPin, FiSearch } from 'react-icons/fi'
+import { FiBookmark, FiCalendar, FiCheckCircle, FiClock, FiExternalLink, FiFilter, FiMapPin, FiSearch, FiUsers, FiAward, FiDollarSign } from 'react-icons/fi'
 import { useUser } from '../context/UserContext'
 import BugReportButton from './BugReportButton'
 
 function Hackathons() {
-  const [jobs, setJobs] = useState([])
+  const [hackathons, setHackathons] = useState([])
   const [searchTerm, setSearchTerm] = useState('')
   const [loading, setLoading] = useState(false)
-  const [savedJobs, setSavedJobs] = useState([])
-  const [resumeAnalyzing, setResumeAnalyzing] = useState(false)
+  const [savedHackathons, setSavedHackathons] = useState([])
   const [filters, setFilters] = useState({
-    jobType: 'internship',
-    location: 'all'
+    mode: 'all', 
+    status: 'all',
+    difficulty: 'all'
   })
-  const [profileExpanded, setProfileExpanded] = useState(false)
 
-  const { 
-    current: user, 
-    hasResume, 
-    userProfile, 
-    updateResumeData,
-    getUserStats
-  } = useUser()
-
-  const API_BASE_URL = 'https://gigi-back.onrender.com'
-  const rec_API_BASE_URL = 'https://job-recommendation-api-jh7p.onrender.com'
-
-  const userStats = getUserStats()
+  const { current: user, hasResume, userProfile } = useUser()
+  const API_BASE_URL = 'https://hackathon-scrapper.onrender.com'
 
   useEffect(() => {
     if (hasResume && userProfile) {
-      fetchPersonalizedJobs()
+      fetchPersonalizedHackathons()
     } else {
-      fetchDefaultJobs()
+      fetchDefaultHackathons()
     }
   }, [hasResume, userProfile, filters])
-  
 
-
-  const fetchDefaultJobs = async () => {
+  const fetchDefaultHackathons = async () => {
     setLoading(true)
     try {
       const params = new URLSearchParams({
         q: searchTerm,
-        location: filters.location === 'all' ? 'flexible' : filters.location,
-        type: filters.jobType
+        mode: filters.mode === 'all' ? '' : filters.mode,
+        status: filters.status === 'all' ? '' : filters.status,
+        difficulty: filters.difficulty === 'all' ? '' : filters.difficulty
       })
       
-      const response = await fetch(`${API_BASE_URL}/api/search-jobs?${params}`)
+      const response = await fetch(`${API_BASE_URL}/api/search-hackathons?${params}`)
       
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`)
       }
       
-      const contentType = response.headers.get("content-type")
-      if (!contentType || !contentType.includes("application/json")) {
-        throw new Error("Response is not JSON")
-      }
-      
       const data = await response.json()
-      
-      if (data.success) {
-        setJobs(data.jobs)
-      } else {
-        console.error('Error fetching jobs:', data.error)
-        setJobs([])
-      }
+      setHackathons(data.success ? data.hackathons || [] : [])
     } catch (error) {
-      console.error('Error fetching jobs:', error)
-      setJobs([])
+      console.error('Error fetching hackathons:', error)
+      setHackathons([])
     } finally {
       setLoading(false)
     }
   }
 
-  const fetchPersonalizedJobs = async () => {
+  const fetchPersonalizedHackathons = async () => {
     setLoading(true)
     try {
-      const response = await fetch(`${rec_API_BASE_URL}/api/get-personalized-jobs`, {
+      const response = await fetch(`${API_BASE_URL}/api/get-personalized-hackathons`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           skills: userProfile?.skills || [],
-          location: filters.location === 'all' ? userProfile?.location || 'flexible' : filters.location,
-          job_type: filters.jobType,
-          experience_level: userProfile?.experience_level || 'entry'
+          experience_level: userProfile?.experience_level || 'beginner',
+          interests: userProfile?.interests || [],
+          preferred_mode: filters.mode === 'all' ? 'any' : filters.mode
         })
       })
       
@@ -94,109 +69,90 @@ function Hackathons() {
         throw new Error(`HTTP error! status: ${response.status}`)
       }
       
-      const contentType = response.headers.get("content-type")
-      if (!contentType || !contentType.includes("application/json")) {
-        throw new Error("Response is not JSON")
-      }
-      
       const data = await response.json()
-      
-      if (data.success) {
-        setJobs(data.jobs)
-      } else {
-        console.error('Error fetching personalized jobs:', data.error)
-        setJobs([])
-      }
+      setHackathons(data.success ? data.hackathons || [] : [])
     } catch (error) {
-      console.error('Error fetching personalized jobs:', error)
-      setJobs([])
+      console.error('Error fetching personalized hackathons:', error)
+      setHackathons([])
     } finally {
       setLoading(false)
     }
   }
 
-  const handleResumeUpload = async (event) => {
-    const file = event.target.files[0]
-    if (!file) return
-
-    if (!file.name.toLowerCase().endsWith('.pdf')) {
-      alert('Please upload a PDF file')
-      return
-    }
-
-    setResumeAnalyzing(true)
-
-    try {
-      // Use the updateResumeData function from context
-      await updateResumeData(file)
-      alert('Resume analyzed successfully! Getting personalized job recommendations...')
-    } catch (error) {
-      console.error('Error uploading resume:', error)
-      alert('Error uploading resume: ' + error.message)
-    } finally {
-      setResumeAnalyzing(false)
-      event.target.value = ''
-    }
+  const toggleSaveHackathon = (hackathonId) => {
+    setSavedHackathons(prev => 
+      prev.includes(hackathonId) 
+        ? prev.filter(id => id !== hackathonId)
+        : [...prev, hackathonId]
+    )
   }
 
-  const toggleSaveJob = (jobId) => {
-    if (savedJobs.includes(jobId)) {
-      setSavedJobs(savedJobs.filter(id => id !== jobId))
-    } else {
-      setSavedJobs([...savedJobs, jobId])
-    }
-  }
-
-  const filterJobs = () => {
-    let filteredJobs = [...jobs]
-    
-    if (searchTerm) {
-      filteredJobs = filteredJobs.filter(job => 
-        job.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        job.company.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        job.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        (job.skills && job.skills.some(skill => skill.toLowerCase().includes(searchTerm.toLowerCase())))
-      )
-    }
-    
-    return filteredJobs
-  }
+  const filteredHackathons = hackathons.filter(hackathon => {
+    if (!searchTerm) return true
+    const searchLower = searchTerm.toLowerCase()
+    return (
+      hackathon.title?.toLowerCase().includes(searchLower) ||
+      hackathon.organizer?.toLowerCase().includes(searchLower) ||
+      hackathon.description?.toLowerCase().includes(searchLower) ||
+      hackathon.themes?.some(theme => theme.toLowerCase().includes(searchLower)) ||
+      hackathon.technologies?.some(tech => tech.toLowerCase().includes(searchLower))
+    )
+  })
 
   const handleFilterChange = (filterType, value) => {
-    setFilters({
-      ...filters,
-      [filterType]: value
-    })
+    setFilters(prev => ({ ...prev, [filterType]: value }))
   }
 
   const handleSearch = () => {
-    if (hasResume && userProfile) {
-      fetchPersonalizedJobs()
-    } else {
-      fetchDefaultJobs()
+    hasResume && userProfile ? fetchPersonalizedHackathons() : fetchDefaultHackathons()
+  }
+
+  const formatDate = (dateString) => {
+    if (!dateString) return 'TBA'
+    try {
+      return new Date(dateString).toLocaleDateString('en-US', {
+        month: 'short',
+        day: 'numeric',
+        year: 'numeric'
+      })
+    } catch {
+      return dateString
     }
   }
 
-  // Test API connection on component mount
-  useEffect(() => {
-    const testConnection = async () => {
-      try {
-        const response = await fetch(`${API_BASE_URL}/api/health`)
-        if (response.ok) {
-          console.log('API connection successful')
-        } else {
-          console.warn('API connection failed - check if Flask server is running')
-        }
-      } catch {
-        console.warn('Cannot connect to Flask server - make sure it\'s running on https://gigi-back.onrender.com')
-      }
+  const getStatusBadge = (status) => {
+    const statusLower = status?.toLowerCase() || ''
+    if (statusLower.includes('upcoming') || statusLower.includes('open')) {
+      return 'bg-green-900/50 text-green-300 border-green-500/30'
+    } else if (statusLower.includes('ongoing') || statusLower.includes('live')) {
+      return 'bg-blue-900/50 text-blue-300 border-blue-500/30'
+    } else if (statusLower.includes('ended') || statusLower.includes('closed')) {
+      return 'bg-gray-900/50 text-gray-300 border-gray-500/30'
     }
-    testConnection()
-  }, [])
+    return 'bg-purple-900/50 text-purple-300 border-purple-500/30'
+  }
+
+  const clearFilters = () => {
+    setSearchTerm('')
+    setFilters({ mode: 'all', status: 'all', difficulty: 'all' })
+    setTimeout(() => {
+      hasResume && userProfile ? fetchPersonalizedHackathons() : fetchDefaultHackathons()
+    }, 100)
+  }
 
   return (
     <div className="pt-20 pb-16 min-h-screen bg-gray-900">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        {/* Header */}
+        <div className="mb-8 text-center">
+          <h1 className="text-4xl font-bold text-white mb-4">
+            🏆 Discover Amazing Hackathons
+          </h1>
+          <p className="text-gray-300 text-lg">
+            Find hackathons that match your skills and interests
+          </p>
+        </div>
+
         {/* Search and Filters */}
         <div className="mb-8 bg-gray-800 rounded-xl shadow-lg p-4 border border-gray-700">
           <div className="flex flex-col md:flex-row md:items-center gap-4">
@@ -204,7 +160,7 @@ function Hackathons() {
               <FiSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
               <input
                 type="text"
-                placeholder="Search jobs, companies, or skills"
+                placeholder="Search hackathons, themes, or technologies"
                 className="pl-10 w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-white placeholder-gray-400"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
@@ -214,32 +170,44 @@ function Hackathons() {
             
             <div className="flex flex-col sm:flex-row gap-4">
               <div className="relative">
-                <label className="block text-sm font-medium text-gray-300 mb-1">Job Type</label>
+                <label className="block text-sm font-medium text-gray-300 mb-1">Mode</label>
                 <select 
                   className="px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-white"
-                  value={filters.jobType}
-                  onChange={(e) => handleFilterChange('jobType', e.target.value)}
+                  value={filters.mode}
+                  onChange={(e) => handleFilterChange('mode', e.target.value)}
                 >
-                  <option value="internship">Internship</option>
-                  <option value="full-time">Full-time</option>
-                  <option value="part-time">Part-time</option>
+                  <option value="all">All Modes</option>
+                  <option value="online">Online</option>
+                  <option value="offline">Offline</option>
+                  <option value="hybrid">Hybrid</option>
                 </select>
               </div>
               
               <div className="relative">
-                <label className="block text-sm font-medium text-gray-300 mb-1">Location</label>
+                <label className="block text-sm font-medium text-gray-300 mb-1">Status</label>
                 <select 
                   className="px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-white"
-                  value={filters.location}
-                  onChange={(e) => handleFilterChange('location', e.target.value)}
+                  value={filters.status}
+                  onChange={(e) => handleFilterChange('status', e.target.value)}
                 >
-                  <option value="all">All Locations</option>
-                  <option value="remote">Remote</option>
-                  <option value="San Francisco">San Francisco</option>
-                  <option value="New York">New York</option>
-                  <option value="Austin">Austin</option>
-                  <option value="Boston">Boston</option>
-                  <option value="Seattle">Seattle</option>
+                  <option value="all">All Status</option>
+                  <option value="upcoming">Upcoming</option>
+                  <option value="ongoing">Ongoing</option>
+                  <option value="past">Past</option>
+                </select>
+              </div>
+
+              <div className="relative">
+                <label className="block text-sm font-medium text-gray-300 mb-1">Difficulty</label>
+                <select 
+                  className="px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-white"
+                  value={filters.difficulty}
+                  onChange={(e) => handleFilterChange('difficulty', e.target.value)}
+                >
+                  <option value="all">All Levels</option>
+                  <option value="beginner">Beginner</option>
+                  <option value="intermediate">Intermediate</option>
+                  <option value="advanced">Advanced</option>
                 </select>
               </div>
               
@@ -255,14 +223,14 @@ function Hackathons() {
           </div>
         </div>
 
-        {/* Job Listings */}
+        {/* Hackathon Listings */}
         <div className="mb-8">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-2xl font-semibold text-white">
-              {hasResume ? 'Recommended for You' : 'Available Opportunities'}
+              {hasResume ? 'Recommended for You' : 'Available Hackathons'}
             </h2>
-            {jobs.length > 0 && (
-              <p className="text-gray-300">{filterJobs().length} jobs found</p>
+            {hackathons.length > 0 && (
+              <p className="text-gray-300">{filteredHackathons.length} hackathons found</p>
             )}
           </div>
           
@@ -272,121 +240,146 @@ function Hackathons() {
             </div>
           ) : (
             <div className="grid grid-cols-1 gap-6">
-              {filterJobs().length > 0 ? (
-                filterJobs().map(job => (
+              {filteredHackathons.length > 0 ? (
+                filteredHackathons.map((hackathon, index) => (
                   <div 
-                    key={job.id}
+                    key={hackathon.id || index}
                     className="bg-gray-800 rounded-xl shadow-lg p-6 hover:shadow-2xl transition-all duration-300 border border-gray-700 hover:border-blue-500/50 group"
                   >
-                    <div className="flex flex-col md:flex-row md:items-center">
-                      {/* Company Logo */}
+                    <div className="flex flex-col md:flex-row md:items-start">
+                      {/* Hackathon Logo/Icon */}
                       <div className="mb-4 md:mb-0 md:mr-6">
-                        <div className="w-16 h-16 rounded-lg overflow-hidden bg-gray-700 flex-shrink-0 border border-gray-600">
-                          <img 
-                            src={job.logo} 
-                            alt={`${job.company} logo`} 
-                            className="w-full h-full object-cover"
-                            onError={(e) => {
-                              e.target.style.display = 'none'
-                              e.target.nextSibling.style.display = 'flex'
-                            }}
-                          />
-                          <div className="w-full h-full bg-gray-600 flex items-center justify-center text-gray-400 text-xs" style={{display: 'none'}}>
-                            No Logo
+                        <div className="w-16 h-16 rounded-lg overflow-hidden bg-gradient-to-br from-blue-500 to-purple-600 flex-shrink-0 border border-gray-600 flex items-center justify-center">
+                          {hackathon.logo ? (
+                            <img 
+                              src={hackathon.logo} 
+                              alt={`${hackathon.title} logo`} 
+                              className="w-full h-full object-cover"
+                              onError={(e) => {
+                                e.target.style.display = 'none'
+                                e.target.nextSibling.style.display = 'flex'
+                              }}
+                            />
+                          ) : null}
+                          <div className="w-full h-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white text-xl font-bold">
+                            <FiAward />
                           </div>
                         </div>
                       </div>
                       
-                      {/* Job Details */}
+                      {/* Hackathon Details */}
                       <div className="flex-grow">
                         <div className="flex flex-col md:flex-row md:items-start md:justify-between mb-2">
                           <div>
-                            <h3 className="text-xl font-semibold text-white mb-1 group-hover:text-blue-400 transition-colors">{job.title}</h3>
-                            <div className="flex items-center gap-4 text-gray-300 mb-2">
-                              <div className="flex items-center">
-                                <FiBriefcase className="mr-1" size={14} />
-                                <span>{job.company}</span>
-                              </div>
-                              <div className="flex items-center">
-                                <FiMapPin className="mr-1" size={14} />
-                                <span>{job.location}</span>
-                              </div>
-                              <div className="flex items-center">
-                                <FiClock className="mr-1" size={14} />
-                                <span>Posted {job.posted}</span>
-                              </div>
+                            <h3 className="text-xl font-semibold text-white mb-1 group-hover:text-blue-400 transition-colors">
+                              {hackathon.title || hackathon.name || 'Untitled Hackathon'}
+                            </h3>
+                            <div className="flex flex-wrap items-center gap-4 text-gray-300 mb-2">
+                              {hackathon.organizer && (
+                                <div className="flex items-center">
+                                  <FiUsers className="mr-1" size={14} />
+                                  <span>{hackathon.organizer}</span>
+                                </div>
+                              )}
+                              {hackathon.location && (
+                                <div className="flex items-center">
+                                  <FiMapPin className="mr-1" size={14} />
+                                  <span>{hackathon.location}</span>
+                                </div>
+                              )}
+                              {hackathon.duration && (
+                                <div className="flex items-center">
+                                  <FiClock className="mr-1" size={14} />
+                                  <span>{hackathon.duration}</span>
+                                </div>
+                              )}
+                              {(hackathon.start_date || hackathon.date) && (
+                                <div className="flex items-center">
+                                  <FiCalendar className="mr-1" size={14} />
+                                  <span>{formatDate(hackathon.start_date || hackathon.date)}</span>
+                                </div>
+                              )}
                             </div>
                           </div>
                           <div className="flex items-center gap-2">
-                            <span className={`inline-block px-3 py-1 rounded-full text-xs font-medium 
-                              ${job.type === 'Internship' 
-                                ? 'bg-green-900/50 text-green-300 border border-green-500/30' 
-                                : 'bg-blue-900/50 text-blue-300 border border-blue-500/30'
-                              }`}
-                            >
-                              {job.type}
-                            </span>
-                            {job.source && (
+                            {hackathon.status && (
+                              <span className={`inline-block px-3 py-1 rounded-full text-xs font-medium border ${getStatusBadge(hackathon.status)}`}>
+                                {hackathon.status}
+                              </span>
+                            )}
+                            {hackathon.mode && (
                               <span className="inline-block px-2 py-1 rounded-md text-xs bg-gray-700 text-gray-300 border border-gray-600">
-                                {job.source}
+                                {hackathon.mode}
                               </span>
                             )}
                           </div>
                         </div>
                         
                         <p className="text-gray-300 mb-4 line-clamp-2">
-                          {job.description}
+                          {hackathon.description || 'No description available'}
                         </p>
                         
-                        {job.skills && job.skills.length > 0 && (
+                        {/* Themes/Technologies */}
+                        {(hackathon.themes || hackathon.technologies) && (
                           <div className="flex flex-wrap gap-2 mb-4">
-                            {job.skills.slice(0, 6).map((skill, index) => (
+                            {(hackathon.themes || hackathon.technologies || []).slice(0, 6).map((item, index) => (
                               <span 
                                 key={index} 
                                 className="bg-gray-700 text-gray-200 px-2 py-1 rounded-md text-xs border border-gray-600"
                               >
-                                {skill}
+                                {item}
                               </span>
                             ))}
-                            {job.skills.length > 6 && (
+                            {(hackathon.themes || hackathon.technologies || []).length > 6 && (
                               <span className="text-gray-400 text-xs">
-                                +{job.skills.length - 6} more
+                                +{(hackathon.themes || hackathon.technologies || []).length - 6} more
                               </span>
                             )}
                           </div>
                         )}
                         
                         <div className="flex flex-col sm:flex-row sm:items-center justify-between">
-                          <div className="text-blue-400 font-semibold mb-2 sm:mb-0">
-                            {job.salary}
+                          <div className="text-blue-400 font-semibold mb-2 sm:mb-0 flex items-center">
+                            {hackathon.prize_pool && (
+                              <>
+                                <FiDollarSign className="mr-1" size={16} />
+                                {hackathon.prize_pool}
+                              </>
+                            )}
+                            {hackathon.team_size && (
+                              <span className="ml-4 text-gray-400">
+                                <FiUsers className="inline mr-1" size={14} />
+                                Team: {hackathon.team_size}
+                              </span>
+                            )}
                           </div>
                           
                           <div className="flex space-x-2">
                             <button 
                               className={`p-2 rounded-full transition-colors ${
-                                savedJobs.includes(job.id) 
+                                savedHackathons.includes(hackathon.id || index)
                                   ? 'bg-blue-900/50 text-blue-400 border border-blue-500/30'
                                   : 'bg-gray-700 text-gray-400 hover:bg-blue-900/30 hover:text-blue-400 border border-gray-600'
                               }`}
-                              onClick={() => toggleSaveJob(job.id)}
-                              aria-label={savedJobs.includes(job.id) ? "Unsave job" : "Save job"}
+                              onClick={() => toggleSaveHackathon(hackathon.id || index)}
+                              aria-label={savedHackathons.includes(hackathon.id || index) ? "Unsave hackathon" : "Save hackathon"}
                             >
-                              {savedJobs.includes(job.id) ? <FiCheckCircle size={20} /> : <FiBookmark size={20} />}
+                              {savedHackathons.includes(hackathon.id || index) ? <FiCheckCircle size={20} /> : <FiBookmark size={20} />}
                             </button>
                             
-                            {job.apply_link && job.apply_link !== '#' ? (
+                            {hackathon.registration_link || hackathon.link ? (
                               <a
-                                href={job.apply_link}
+                                href={hackathon.registration_link || hackathon.link}
                                 target="_blank"
                                 rel="noopener noreferrer"
                                 className="inline-flex items-center px-4 py-2 bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white rounded-lg transition-all duration-300 hover:scale-105"
                               >
-                                Apply Now
+                                Register Now
                                 <FiExternalLink className="ml-2" size={16} />
                               </a>
                             ) : (
                               <button className="px-4 py-2 bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white rounded-lg transition-all duration-300 hover:scale-105">
-                                Apply Now
+                                View Details
                               </button>
                             )}
                           </div>
@@ -401,22 +394,12 @@ function Hackathons() {
                     <FiSearch size={48} className="mx-auto" />
                   </div>
                   <p className="text-gray-300 mb-4">
-                    {loading ? 'Loading jobs...' : 'No job listings match your search criteria.'}
+                    {loading ? 'Loading hackathons...' : 'No hackathons match your search criteria.'}
                   </p>
                   {!loading && (
                     <button 
                       className="px-4 py-2 bg-gray-700 text-gray-200 rounded-lg hover:bg-gray-600 transition-colors border border-gray-600"
-                      onClick={() => {
-                        setSearchTerm('')
-                        setFilters({ jobType: 'internship', location: 'all' })
-                        setTimeout(() => {
-                          if (hasResume && userProfile) {
-                            fetchPersonalizedJobs()
-                          } else {
-                            fetchDefaultJobs()
-                          }
-                        }, 100)
-                      }}
+                      onClick={clearFilters}
                     >
                       Clear Filters
                     </button>
@@ -431,25 +414,22 @@ function Hackathons() {
         {hasResume && userProfile && (
           <div className="bg-gray-800 rounded-xl shadow-lg p-6 border border-gray-700">
             <h3 className="text-lg font-semibold text-white mb-4">
-              💡 Job Search Tips Based on Your Profile
+              💡 Hackathon Tips Based on Your Profile
             </h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="p-4 bg-blue-900/30 rounded-lg border border-blue-500/30">
-                <h4 className="font-medium text-blue-300 mb-2">Profile Optimization</h4>
+                <h4 className="font-medium text-blue-300 mb-2">Skill Matching</h4>
                 <p className="text-blue-200 text-sm">
-                  {userProfile.completenessScore < 80 
-                    ? "Complete your profile to increase visibility to recruiters. Add more skills and work experience."
-                    : "Your profile looks great! Keep it updated with your latest achievements and skills."
+                  {userProfile.experience_level === 'beginner' 
+                    ? "Look for beginner-friendly hackathons with mentorship programs to build your skills."
+                    : "Your experience level qualifies you for advanced hackathons with bigger prizes and challenges."
                   }
                 </p>
               </div>
               <div className="p-4 bg-green-900/30 rounded-lg border border-green-500/30">
-                <h4 className="font-medium text-green-300 mb-2">Application Tips</h4>
+                <h4 className="font-medium text-green-300 mb-2">Success Tips</h4>
                 <p className="text-green-200 text-sm">
-                  {userProfile.experience_level === 'entry' 
-                    ? "Focus on internships and entry-level positions. Highlight your projects and academic achievements."
-                    : "Leverage your experience! Apply to positions that match your skill level and career goals."
-                  }
+                  Form diverse teams, focus on solving real problems, and don&apos;t forget to present your solution clearly!
                 </p>
               </div>
             </div>
@@ -457,9 +437,9 @@ function Hackathons() {
         )}
       </div>
       <BugReportButton 
-  userEmail={user?.email || ''} 
-  userName={user?.name || ''} 
-/>
+        userEmail={user?.email || ''} 
+        userName={user?.name || ''} 
+      />
     </div>
   )
 }
