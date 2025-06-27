@@ -1,43 +1,62 @@
 import { useEffect, useState } from 'react'
-import { FiBookmark, FiBriefcase, FiCheckCircle, FiClock, FiExternalLink, FiFilter, FiMapPin, FiSearch } from 'react-icons/fi'
+import { FiBookmark, FiBriefcase, FiCheckCircle, FiClock, FiExternalLink, FiFilter, FiMapPin, FiSearch, FiX } from 'react-icons/fi'
 import { useUser } from '../context/UserContext'
 import AddNewJobForm from './AddnewJobForm'
-
+import { databases, Query } from '../appwrite';
 function Jobs() {
   const [jobs, setJobs] = useState([])
   const [searchTerm, setSearchTerm] = useState('')
   const [loading, setLoading] = useState(false)
   const [savedJobs, setSavedJobs] = useState([])
-  const [resumeAnalyzing, setResumeAnalyzing] = useState(false)
+  const [userPostedJobs, setUserPostedJobs] = useState([]);
   const [filters, setFilters] = useState({
     jobType: 'internship',
     location: 'all'
   })
-  const [profileExpanded, setProfileExpanded] = useState(false)
-
+  const fetchUserPostedJobs = async () => {
+  try {
+    const response = await databases.listDocuments(
+      'gigrithm',
+      'aggregated_jobs',
+      [
+        Query.equal('createdBy', user?.email || '')
+      ]
+    );
+    return response.documents;
+  } catch (error) {
+    console.error('Error fetching user jobs:', error);
+    return [];
+  }
+};
+const deleteUserJob = async (documentId) => {
+  try {
+    await databases.deleteDocument('gigrithm', 'aggregated_jobs', documentId);
+    // Refresh the jobs list
+    fetchUserPostedJobs();
+  } catch (error) {
+    console.error('Error deleting job:', error);
+    alert('Failed to delete job');
+  }
+};
   const { 
     current: user, 
     hasResume, 
     userProfile, 
-    updateResumeData,
-    getUserStats
   } = useUser()
 
   const API_BASE_URL = 'https://gigi-back.onrender.com'
   const rec_API_BASE_URL = 'https://job-recommendation-api-jh7p.onrender.com'
-
-  const userStats = getUserStats()
-
   useEffect(() => {
+    if (user?.email) {
+    fetchUserPostedJobs().then(setUserPostedJobs);
+  }
     if (hasResume && userProfile) {
       fetchPersonalizedJobs()
     } else {
       fetchDefaultJobs()
     }
-  }, [hasResume, userProfile, filters])
+  }, [user, hasResume, userProfile, filters]);
   
-
-
   const fetchDefaultJobs = async () => {
     setLoading(true)
     try {
@@ -115,30 +134,7 @@ function Jobs() {
     }
   }
 
-  const handleResumeUpload = async (event) => {
-    const file = event.target.files[0]
-    if (!file) return
-
-    if (!file.name.toLowerCase().endsWith('.pdf')) {
-      alert('Please upload a PDF file')
-      return
-    }
-
-    setResumeAnalyzing(true)
-
-    try {
-      // Use the updateResumeData function from context
-      await updateResumeData(file)
-      alert('Resume analyzed successfully! Getting personalized job recommendations...')
-    } catch (error) {
-      console.error('Error uploading resume:', error)
-      alert('Error uploading resume: ' + error.message)
-    } finally {
-      setResumeAnalyzing(false)
-      event.target.value = ''
-    }
-  }
-
+  
   const toggleSaveJob = (jobId) => {
     if (savedJobs.includes(jobId)) {
       setSavedJobs(savedJobs.filter(id => id !== jobId))
@@ -254,7 +250,53 @@ function Jobs() {
             </div>
           </div>
         </div>
-
+        {userPostedJobs.length > 0 && (
+          <div className="mb-8">
+            <h3 className="text-xl font-semibold text-white mb-4">Your Posted Jobs</h3>
+           {userPostedJobs.map(job => (
+  <div 
+    key={job.$id}
+    className="bg-gray-800 rounded-xl shadow-lg p-6 border border-blue-500 mb-4"
+  >
+    <div className="flex justify-between items-start">
+      <div className="flex-grow">
+        <div className="flex items-center gap-2 mb-2">
+          <h4 className="text-lg font-semibold text-white">{job.jobRole}</h4>
+          <span className="bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white rounded-lg transition-all duration-300 hover:scale-105 px-2 py-1 rounded text-xs border border-blue-500">
+            Your Post
+          </span>
+        </div>
+        <p className="text-gray-300 mb-2">
+          <span className="font-medium">{job.companyName}</span> • {job.location}
+        </p>
+        <p className="text-gray-400 text-sm mb-3 line-clamp-2">{job.description}</p>
+        {job.skills && job.skills.length > 0 && (
+          <div className="flex flex-wrap gap-2">
+            {job.skills.slice(0, 4).map((skill, index) => (
+              <span key={index} className="bg-gray-700 text-gray-200 px-2 py-1 rounded text-xs">
+                {skill}
+              </span>
+            ))}
+          </div>
+        )}
+      </div>
+      
+      <button
+        onClick={() => {
+          if (window.confirm('Are you sure you want to delete this job posting?')) {
+            deleteUserJob(job.$id);
+          }
+        }}
+        className="ml-4 p-2 bg-red-900/50 text-red-400 rounded-lg hover:bg-red-900 transition-colors border border-red-500/30"
+        title="Delete job posting"
+      >
+        <FiX size={18} />
+      </button>
+    </div>
+  </div>
+))}
+          </div>
+        )}
         {/* Job Listings */}
         <div className="mb-8">
           <div className="flex items-center justify-between mb-4">

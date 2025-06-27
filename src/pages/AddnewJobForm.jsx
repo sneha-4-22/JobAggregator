@@ -6,6 +6,7 @@ import {
     X as FiX
 } from 'lucide-react';
 import { useState } from 'react';
+import { ID,databases } from '../appwrite';
 
 const AddJobModal = ({ isOpen, onClose, userEmail = '', userName = '' }) => {
   const [formData, setFormData] = useState({
@@ -30,11 +31,9 @@ const AddJobModal = ({ isOpen, onClose, userEmail = '', userName = '' }) => {
   const [submitSuccess, setSubmitSuccess] = useState(false);
   const [errors, setErrors] = useState({});
 
-  // Appwrite configuration - Replace with your actual values
-  const APPWRITE_PROJECT_ID = '6842e9050013dcd9e1bb';
-  const APPWRITE_DATABASE_ID = 'gigrithm';
+  // Appwrite configuration
+  const APPWRITE_DATABASE_ID = 'gigrithm'; 
   const APPWRITE_COLLECTION_ID = 'aggregated_jobs';
-  const APPWRITE_ENDPOINT = 'https://cloud.appwrite.io/v1';
 
   const handleInputChange = (field, value) => {
     setFormData(prev => ({
@@ -154,16 +153,7 @@ const AddJobModal = ({ isOpen, onClose, userEmail = '', userName = '' }) => {
 
   const submitToAppwrite = async (jobData) => {
     try {
-      // Initialize Appwrite SDK
-      const { Client, Databases, ID } = await import('appwrite');
-      
-      const client = new Client()
-        .setEndpoint(APPWRITE_ENDPOINT)
-        .setProject(APPWRITE_PROJECT_ID);
-      
-      const databases = new Databases(client);
-      
-      // Create document in Appwrite
+      // Create document in Appwrite using your existing client
       const response = await databases.createDocument(
         APPWRITE_DATABASE_ID,
         APPWRITE_COLLECTION_ID,

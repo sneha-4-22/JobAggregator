@@ -1,4 +1,4 @@
-import { Client, Account, Databases, ID } from 'appwrite';
+import { Client, Account, Databases, ID, Query } from 'appwrite';
 const client = new Client();
 
 client
@@ -7,7 +7,7 @@ client
 
 export const account = new Account(client);
 export const databases = new Databases(client);
-export { ID }; 
+export { ID, Query }; 
 
 
 export async function isEmailVerified() {
@@ -40,5 +40,4 @@ export async function completePasswordRecovery(userId, secret, password) {
   }
 }
 
-// Add this constant for your user_activity collection
 export const USER_ACTIVITY_COLLECTION_ID = 'user_activity';
