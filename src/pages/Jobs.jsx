@@ -3,6 +3,7 @@ import { FiBookmark, FiBriefcase, FiCheckCircle, FiClock, FiExternalLink, FiFilt
 import { useUser } from '../context/UserContext'
 import AddNewJobForm from './AddnewJobForm'
 import { databases, Query } from '../appwrite';
+import BugReportButton from './BugReportButton';
 function Jobs() {
   const [jobs, setJobs] = useState([])
   const [searchTerm, setSearchTerm] = useState('')
@@ -498,6 +499,10 @@ const deleteUserJob = async (documentId) => {
           </div>
         )}
       </div>
+      <BugReportButton 
+        userEmail={user?.email || ''} 
+        userName={user?.name || ''} 
+      />
       <AddNewJobForm
   userEmail={user?.email || ''} 
   userName={user?.name || ''} 

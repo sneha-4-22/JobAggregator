@@ -42,14 +42,14 @@ function Footer() {
                 </Link>
               </li>
               <li>
-                <a href="#" className="text-gray-400 hover:text-white transition-colors">
+                <Link to="/jobs" className="text-gray-400 hover:text-white transition-colors">
                   Jobs
-                </a>
+                </Link>
               </li>
               <li>
-                <a href="#" className="text-gray-400 hover:text-white transition-colors">
-                  Internships
-                </a>
+                <Link to="/hackathons" className="text-gray-400 hover:text-white transition-colors">
+                  Hackathon
+                </Link>
               </li>
             </ul>
           </div>
