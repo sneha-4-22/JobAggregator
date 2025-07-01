@@ -192,7 +192,7 @@ const deleteUserJob = async (documentId) => {
   }, [])
 
   return (
-    <div className="pt-20 pb-16 min-h-screen bg-gray-900">
+    <div className="pt-32 pb-16 min-h-screen bg-gray-900">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Search and Filters */}
         <div className="mb-8 bg-gray-800 rounded-xl shadow-lg p-4 border border-gray-700">
