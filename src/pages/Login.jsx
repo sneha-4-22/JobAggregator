@@ -3,7 +3,7 @@ import { Link, useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { FiMail, FiLock, FiEye, FiEyeOff, FiLoader } from 'react-icons/fi'
 import { useUser } from '../context/UserContext'
-
+import toast from 'react-hot-toast'
 function Login() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -37,15 +37,13 @@ function Login() {
         }
       }
     } catch (loginError) {
-      console.error('Login error:', loginError)
-      
-      // Handle specific error cases
+
       if (loginError.code === 401) {
-        setError('Invalid email or password')
+        toast.error('Invalid email or password')
       } else if (loginError.message?.includes('Invalid credentials')) {
-        setError('Invalid email or password')
+        toast.error('Invalid email or password')
       } else {
-        setError(loginError.message || 'Login failed. Please try again.')
+        toast.error(loginError.message || 'Login failed. Please try again.')
       }
     } finally {
       setIsLoading(false)
@@ -53,7 +51,7 @@ function Login() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-900 flex items-center justify-center">
+    <div className="min-h-screen bg-gray-900 flex items-center justify-center pt-20 pb-10">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <motion.div 
           className="max-w-md mx-auto mt-9"

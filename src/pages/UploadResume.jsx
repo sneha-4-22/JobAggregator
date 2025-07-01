@@ -197,7 +197,7 @@ function UploadResume() {
 
   const renderConfirmStep = () => (
     <>
-      <div className="text-center mb-8">
+      <div className="text-center mb-8 ">
         <h1 className="text-3xl font-bold mb-2 text-white">Create Your Account</h1>
         <p className="text-gray-300">
           Confirm your email and set a password. Your profile will be automatically created from your resume.
@@ -338,7 +338,7 @@ function UploadResume() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-900 flex items-center justify-center">
+    <div className="min-h-screen bg-gray-900 flex items-center justify-center pt-20 pb-16">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <motion.div 
           className="max-w-xl mx-auto"

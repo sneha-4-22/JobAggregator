@@ -13,13 +13,16 @@ import ResetPassword from './pages/ResetPassword'
 import Settings from './pages/Settings'
 import UploadResume from './pages/UploadResume'
 import VerifyEmail from './pages/VerifyEmail'
+import { Toaster } from 'react-hot-toast' 
 
 function App() {
   const { current, loading, isVerified } = useUser()
      
   if (loading) {
   return (
+    
     <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-gray-800 via-gray-900 to-gray-800 relative overflow-hidden">
+      
       {/* Animated background orbs */}
       <div className="absolute inset-0">
         <div className="absolute top-20 left-20 w-32 h-32 bg-blue-500/20 rounded-full blur-xl animate-pulse"></div>
@@ -66,6 +69,18 @@ function App() {
   )
 }
   return (
+    <>
+    <Toaster 
+      position="top-right"
+      toastOptions={{
+        duration: 4000,
+        style: {
+          background: '#374151',
+          color: '#fff',
+          border: '1px solid #4B5563'
+        }
+      }}
+    />
     <Routes>
       <Route path="/" element={<Layout />}>
         {/* Public routes */}
@@ -94,6 +109,7 @@ function App() {
         <Route path="*" element={<NotFound />} />
       </Route>
     </Routes>
+    </>
   )
 }
 

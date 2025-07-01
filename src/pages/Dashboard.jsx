@@ -224,9 +224,9 @@ function Dashboard() {
               )}
             </div>
           </div>
-          <div className="mt-2 text-sm text-gray-400">
+          {/* <div className="mt-2 text-sm text-gray-400">
             API Status: <span className="font-medium text-blue-400">Connected to {API_BASE_URL}</span>
-          </div>
+          </div> */}
         </div>
 
         {/* Profile Completeness Banner */}
