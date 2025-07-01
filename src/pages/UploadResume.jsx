@@ -133,16 +133,16 @@ function UploadResume() {
 
   const renderUploadStep = () => (
     <>
-      <div className="text-center mb-8">
-        <h1 className="text-3xl font-bold mb-2 text-white">Upload Your Resume</h1>
-        <p className="text-gray-300">
+      <div className="text-center mb-4">
+        <h1 className="text-xl font-bold mb-1 text-white">Upload Your Resume</h1>
+        <p className="text-xs text-gray-300">
           We&#39;ll create your account and extract your profile information from your resume.
         </p>
       </div>
       
       <div 
         {...getRootProps()} 
-        className={`border-2 border-dashed rounded-lg p-8 mb-6 transition-all duration-300 text-center cursor-pointer
+        className={`border-2 border-dashed rounded-lg p-4 mb-3 transition-all duration-300 text-center cursor-pointer
           ${isDragActive 
             ? 'border-blue-500 bg-blue-500/10' 
             : 'border-gray-600 hover:border-blue-500 hover:bg-blue-500/5'
@@ -152,19 +152,19 @@ function UploadResume() {
         <div className="flex flex-col items-center justify-center">
           {file ? (
             <>
-              <FiFile className="text-blue-400 mb-4" size={40} />
-              <p className="text-blue-400 font-medium text-lg">{file.name}</p>
-              <p className="text-gray-400 text-sm mt-2">
+              <FiFile className="text-blue-400 mb-2" size={24} />
+              <p className="text-blue-400 font-medium text-sm">{file.name}</p>
+              <p className="text-gray-400 text-xs mt-2">
                 {(file.size / 1024 / 1024).toFixed(2)} MB
               </p>
             </>
           ) : (
             <>
-              <FiUpload className="text-gray-400 mb-4" size={40} />
-              <p className="text-white font-medium text-lg mb-2">
+              <FiUpload className="text-gray-400 mb-2" size={24} />
+              <p className="text-white font-medium text-sm mb-1">
                 Drag & drop your resume here
               </p>
-              <p className="text-gray-400 text-sm">
+              <p className="text-gray-400 text-xs">
                 (PDF file only, max 5MB)
               </p>
             </>
@@ -176,7 +176,7 @@ function UploadResume() {
         <button 
           onClick={handleExtractEmail}
           disabled={!file || uploading}
-          className={`bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white font-semibold px-8 py-3 rounded-full transition-all duration-300 hover:scale-105 w-full ${
+          className={`bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white font-semibold px-4 py-2 rounded-full transition-all duration-300 hover:scale-105 w-full text-sm ${
             (!file || uploading) 
               ? 'opacity-50 cursor-not-allowed hover:scale-100' 
               : 'hover:shadow-xl hover:shadow-blue-500/25'
@@ -197,16 +197,16 @@ function UploadResume() {
 
   const renderConfirmStep = () => (
     <>
-      <div className="text-center mb-8 ">
-        <h1 className="text-3xl font-bold mb-2 text-white">Create Your Account</h1>
-        <p className="text-gray-300">
+      <div className="text-center mb-4 ">
+        <h1 className="text-xl font-bold mb-1 text-white">Create Your Account</h1>
+        <p className="text-xs text-gray-300">
           Confirm your email and set a password. Your profile will be automatically created from your resume.
         </p>
       </div>
       
-      <div className="space-y-6">
+      <div className="space-y-3">
         <div>
-          <label className="block text-sm font-medium text-gray-300 mb-2">
+          <label className="block text-xs font-medium text-gray-300 mb-1">
             Email Address
           </label>
           <div className="relative">
@@ -214,7 +214,7 @@ function UploadResume() {
               type="email"
               value={editableEmail}
               onChange={(e) => setEditableEmail(e.target.value)}
-              className="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
               placeholder="Enter your email"
             />
             <FiEdit3 className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
@@ -227,7 +227,7 @@ function UploadResume() {
         </div>
         
         <div>
-          <label className="block text-sm font-medium text-gray-300 mb-2">
+          <label className="block text-xs font-medium text-gray-300 mb-1">
             Password
           </label>
           <div className="relative">
@@ -235,7 +235,7 @@ function UploadResume() {
               type={showPassword ? 'text' : 'password'}
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent pr-12"
+              className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent pr-12 text-sm"
               placeholder="Enter your password"
             />
             <button
@@ -246,13 +246,13 @@ function UploadResume() {
               {showPassword ? <FiEyeOff /> : <FiEye />}
             </button>
           </div>
-          <p className="text-gray-400 text-sm mt-1">
+          <p className="text-gray-400 text-xs mt-1">
             Must be at least 8 characters long
           </p>
         </div>
         
         <div>
-          <label className="block text-sm font-medium text-gray-300 mb-2">
+          <label className="block text-xs font-medium text-gray-300 mb-1">
             Confirm Password
           </label>
           <div className="relative">
@@ -260,7 +260,7 @@ function UploadResume() {
               type={showConfirmPassword ? 'text' : 'password'}
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
-              className="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent pr-12"
+              className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent pr-12 text-sm"
               placeholder="Confirm your password"
             />
             <button
@@ -274,19 +274,19 @@ function UploadResume() {
         </div>
       </div>
       
-      <div className="flex space-x-4 mt-8">
+      <div className="flex space-x-2 mt-4">
         <button 
           onClick={() => setStep('upload')}
-          className="flex-1 border border-gray-600 text-gray-300 hover:border-blue-400 hover:text-blue-400 font-semibold px-6 py-3 rounded-full transition-all duration-300"
+          className="flex-1 border border-gray-600 text-gray-300 hover:border-blue-400 hover:text-blue-400 font-semibold px-3 py-2 rounded-full transition-all duration-300 text-sm"
         >
           Back
         </button>
         <button 
           onClick={handleRegister}
           disabled={registrationStatus === 'registering'}
-          className="flex-1 bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white font-semibold px-6 py-3 rounded-full transition-all duration-300 hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
+          className="flex-1 bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white font-semibold px-3 py-2 rounded-full transition-all duration-300 hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 text-sm"
         >
-          Create Account & Process Resume
+          Create Account
         </button>
       </div>
     </>
@@ -295,11 +295,11 @@ function UploadResume() {
   const renderStatus = () => {
     if (registrationStatus === 'registering') {
       return (
-        <div className="flex flex-col items-center justify-center space-y-4 text-blue-400 mb-6">
-          <FiLoader className="animate-spin text-2xl" />
+        <div className="flex flex-col items-center justify-center space-y-2 text-blue-400 mb-3">
+          <FiLoader className="animate-spin text-xl" />
           <div className="text-center">
-            <p className="font-medium">Creating your account...</p>
-            <p className="text-sm text-gray-400">This may take a few moments as we process your resume</p>
+            <p className="font-medium text-sm">Creating your account...</p>
+            <p className="text-xs text-gray-400">This may take a few moments as we process your resume</p>
           </div>
         </div>
       )
@@ -307,14 +307,14 @@ function UploadResume() {
     
     if (registrationStatus === 'success') {
       return (
-        <div className="text-center mb-6">
-          <div className="text-green-400 mb-4 text-2xl">
+        <div className="text-center mb-3">
+          <div className="text-green-400 mb-2 text-lg">
             <span>✓ Account created successfully!</span>
           </div>
-          <p className="text-gray-300 mb-2">
+          <p className="text-gray-300 mb-2 text-sm">
             Your profile has been created with your resume data.
           </p>
-          <p className="text-gray-400 text-sm">
+          <p className="text-gray-400 text-xs">
             Redirecting to dashboard...
           </p>
         </div>
@@ -323,11 +323,11 @@ function UploadResume() {
     
     if (registrationStatus === 'failed') {
       return (
-        <div className="text-center mb-6">
-          <div className="text-red-400 mb-4">
+        <div className="text-center mb-3">
+          <div className="text-red-400 mb-2">
             <span>✗ Registration failed</span>
           </div>
-          <p className="text-gray-300">
+          <p className="text-gray-300 text-sm">
             Please try again or contact support if the issue persists.
           </p>
         </div>
@@ -341,18 +341,18 @@ function UploadResume() {
     <div className="min-h-screen bg-gray-900 flex items-center justify-center pt-20 pb-16">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <motion.div 
-          className="max-w-xl mx-auto"
+          className="max-w-sm mx-auto"
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
         >
-          <div className="bg-gray-800 rounded-2xl p-8 border border-gray-700 shadow-xl">
+          <div className="bg-gray-800 rounded-2xl p-5 border border-gray-700 shadow-xl">
             {renderStatus()}
             
             {error && (
-              <div className="mb-6 text-center">
+              <div className="mb-3 text-center">
                 <div className="bg-red-500/10 border border-red-500/30 rounded-lg p-3">
-                  <p className="text-red-400">{error}</p>
+                  <p className="text-red-400 text-xs">{error}</p>
                 </div>
               </div>
             )}
@@ -360,7 +360,7 @@ function UploadResume() {
             {step === 'upload' && renderUploadStep()}
             {step === 'confirm' && renderConfirmStep()}
             
-            <div className="mt-6 text-center text-sm text-gray-400">
+            <div className="mt-3 text-center text-xs text-gray-400">
               <p>
                 Already have an account?{' '}
                 <button 
@@ -372,7 +372,7 @@ function UploadResume() {
               </p>
             </div>
             
-            <div className="mt-4 text-center text-sm text-gray-400">
+            <div className="mt-3 text-center text-xs text-gray-400">
               <p>
                 By creating an account, you agree to our{' '}
                 <a href="#" className="text-blue-400 hover:text-blue-300 hover:underline transition-colors">

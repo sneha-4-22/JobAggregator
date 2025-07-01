@@ -4,6 +4,7 @@ import { motion } from 'framer-motion'
 import { FiMail, FiLock, FiEye, FiEyeOff, FiLoader } from 'react-icons/fi'
 import { useUser } from '../context/UserContext'
 import toast from 'react-hot-toast'
+
 function Login() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -51,33 +52,33 @@ function Login() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-900 flex items-center justify-center pt-20 pb-10">
+    <div className="min-h-screen bg-gray-900 flex items-center justify-center py-8">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <motion.div 
-          className="max-w-md mx-auto mt-9"
+          className="max-w-sm mx-auto"
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
         >
-          <div className="bg-gray-800 rounded-2xl p-8 border border-gray-700 shadow-xl">
-            <div className="text-center mb-8">
-              <h1 className="text-3xl font-bold mb-2 text-white">Welcome Back</h1>
-              <p className="text-gray-300">
+          <div className="bg-gray-800 rounded-xl p-6 border border-gray-700 shadow-xl">
+            <div className="text-center mb-6">
+              <h1 className="text-2xl font-bold mb-1 text-white">Welcome Back</h1>
+              <p className="text-gray-300 text-sm">
                 Sign in to your Gigrithm account
               </p>
             </div>
 
             {error && (
-              <div className="mb-6">
-                <div className="bg-red-500/10 border border-red-500/30 rounded-lg p-3">
+              <div className="mb-4">
+                <div className="bg-red-500/10 border border-red-500/30 rounded-lg p-2.5">
                   <p className="text-red-400 text-sm">{error}</p>
                 </div>
               </div>
             )}
 
-            <form onSubmit={handleSubmit} className="space-y-6">
+            <form onSubmit={handleSubmit} className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">
+                <label className="block text-sm font-medium text-gray-300 mb-1.5">
                   Email Address
                 </label>
                 <div className="relative">
@@ -85,16 +86,16 @@ function Login() {
                     type="email"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    className="w-full px-4 py-3 pl-12 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    className="w-full px-4 py-2.5 pl-10 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
                     placeholder="Enter your email"
                     required
                   />
-                  <FiMail className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400" />
+                  <FiMail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 text-sm" />
                 </div>
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">
+                <label className="block text-sm font-medium text-gray-300 mb-1.5">
                   Password
                 </label>
                 <div className="relative">
@@ -102,37 +103,37 @@ function Login() {
                     type={showPassword ? 'text' : 'password'}
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    className="w-full px-4 py-3 pl-12 pr-12 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    className="w-full px-4 py-2.5 pl-10 pr-10 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
                     placeholder="Enter your password"
                     required
                   />
-                  <FiLock className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400" />
+                  <FiLock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 text-sm" />
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-white transition-colors"
+                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-white transition-colors"
                   >
-                    {showPassword ? <FiEyeOff /> : <FiEye />}
+                    {showPassword ? <FiEyeOff className="text-sm" /> : <FiEye className="text-sm" />}
                   </button>
                 </div>
               </div>
 
-              <div className="flex items-center justify-between">
+              <div className="flex items-center justify-between text-sm">
                 <div className="flex items-center">
                   <input
                     id="remember-me"
                     name="remember-me"
                     type="checkbox"
-                    className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-600 bg-gray-700 rounded"
+                    className="h-3.5 w-3.5 text-blue-600 focus:ring-blue-500 border-gray-600 bg-gray-700 rounded"
                   />
-                  <label htmlFor="remember-me" className="ml-2 block text-sm text-gray-300">
+                  <label htmlFor="remember-me" className="ml-2 block text-gray-300">
                     Remember me
                   </label>
                 </div>
 
-                <div className="text-sm">
+                <div>
                   <Link to="/forgot-password" className="text-blue-400 hover:text-blue-300 hover:underline transition-colors">
-                  Forgot your password?
+                  Forgot password?
                 </Link>
                 </div>
               </div>
@@ -140,11 +141,11 @@ function Login() {
               <button
                 type="submit"
                 disabled={isLoading}
-                className="w-full bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white font-semibold px-6 py-3 rounded-full transition-all duration-300 hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
+                className="w-full bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white font-semibold px-6 py-2.5 rounded-full transition-all duration-300 hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 text-sm"
               >
                 {isLoading ? (
                   <span className="flex items-center justify-center">
-                    <FiLoader className="animate-spin mr-2" />
+                    <FiLoader className="animate-spin mr-2 text-sm" />
                     Signing in...
                   </span>
                 ) : (
@@ -153,7 +154,7 @@ function Login() {
               </button>
             </form>
 
-            <div className="mt-6 text-center">
+            <div className="mt-4 text-center">
               <div className="relative">
                 <div className="absolute inset-0 flex items-center">
                   <div className="w-full border-t border-gray-600" />
@@ -164,23 +165,23 @@ function Login() {
               </div>
             </div>
 
-            <div className="mt-6 text-center">
+            <div className="mt-4 text-center">
               <p className="text-gray-400 text-sm">
                 Don&#39;t have an account?{' '}
                 <Link 
                   to="/upload-resume" 
                   className="text-blue-400 hover:text-blue-300 hover:underline transition-colors font-medium"
                 >
-                  Get started with your resume
+                  Get started
                 </Link>
               </p>
             </div>
 
-            <div className="mt-4 text-center text-sm text-gray-400">
+            <div className="mt-3 text-center text-xs text-gray-500">
               <p>
                 By signing in, you agree to our{' '}
                 <a href="#" className="text-blue-400 hover:text-blue-300 hover:underline transition-colors">
-                  Terms of Service
+                  Terms
                 </a>{' '}
                 and{' '}
                 <a href="#" className="text-blue-400 hover:text-blue-300 hover:underline transition-colors">
